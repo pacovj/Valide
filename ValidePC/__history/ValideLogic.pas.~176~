@@ -1,0 +1,381 @@
+unit ValideLogic;
+
+interface
+uses
+FireDAC.Comp.Client,System.StrUtils,SysUtils,Dialogs,Vcl.StdCtrls,Classes;
+
+procedure loadFromDump(key:String;target:TFDTable;Query:TFDQuery;con:TFDConnection);
+procedure loadDictionary(target:TFDTable);
+procedure tokenizeMe(Line:String;List:TStrings);
+function lemmatizeMe(word:String;Dictionary:TFDTable):String;
+procedure lemmatize(words:TStrings;Dictionary:TFDTable;lemmas:TStrings);
+procedure getUses(lemmas:TStrings;Query:TFDQuery);
+procedure loadCollocations(target:TFDTable;Query:TFDQuery;variante:TFDTable;dictionary:TFDTable);
+function listToString(words:TStrings;Separator:String):String;
+function listNToString(words:TStrings;Separator:String;start:Integer;n:Integer):String;
+
+
+procedure getVariantes(words:TStrings;lemmas:TStrings;variante:TFDTable;variantes:TStrings;paises:String;varpaises:TFDTable);
+function filterPaises(paises:TStrings;Pais:TFDTable):String;
+function isValid(clave_variante:String;paises:String;varpaises:TFDTable):Boolean;
+procedure getUsos(variantes:TStrings;varpaises:TFDTable;usos:TStrings);
+
+procedure getConceptos(variantes:TStrings;variante:TFDTable;conceptos:TStrings);
+
+
+implementation
+
+
+procedure loadDictionary(target:TFDTable);
+var
+  myFile : TextFile;
+  list : TStrings;
+  line : UTF8String;
+  i:Integer;
+begin
+   target.TableName:='MORPH';
+   target.Active:=true;
+   if target.RecordCount<1 then
+   begin
+     AssignFile(myFile, 'dbs/dumps/morph.txt');
+     Reset(myFile);
+     // Display the file contents
+     list:=TStringList.Create;
+     while not Eof(myFile) do
+     begin
+        ReadLn(myFile, line);
+        list.Clear;
+        tokenizeMe(line,list);
+        target.Insert;
+        target.FieldValues['base']:=list[1];
+        target.FieldValues['morph']:=list[0];
+        target.FieldValues['tag']:=list[2];
+        target.Post;
+     end;
+     CloseFile(myFile);
+
+   end;
+end;
+
+procedure loadCollocations(target:TFDTable;Query:TFDQuery;variante:TFDTable;dictionary:TFDTable);
+var
+  toks:TStrings;
+  lemmas:TStrings;
+begin
+  if target.FieldByName('parsed').AsInteger=0 then
+   begin
+      Query.ExecSQL('alter table VARIANTE ADD COLUMN Palabras INTEGER;');
+      Query.ExecSQL('alter table VARIANTE ADD COLUMN Lemmas VARCHAR(60);');
+      Query.ExecSQL('alter table VARIANTE ADD COLUMN PrimerLemma VARCHAR(50);');
+      variante.TableName:='VARIANTE';
+      variante.Active:=true;
+      variante.First;
+      toks:=TStringList.Create;
+      lemmas:=TStringList.Create;
+      while not variante.Eof do
+      begin
+        toks.Clear;
+        lemmas.Clear;
+        variante.Edit;
+        tokenizeMe(variante.FieldValues['Variante'],toks);
+        lemmatize(toks,dictionary,lemmas);
+        variante.FieldValues['Palabras']:=toks.Count;
+        variante.FieldValues['Lemmas']:=listToString(lemmas,' ');
+        variante.FieldValues['PrimerLemma']:=lemmas[0];
+        variante.Post;
+        variante.Next;
+      end;
+      target.Edit;
+      target.FieldValues['parsed']:=1;
+      target.Post;
+   end;
+end;
+
+function listNToString(words:TStrings;Separator:String;start:Integer;n:Integer):String;
+var
+  i:Integer;
+  s:String;
+begin
+  s:=words[start];
+  i := 1;
+  while (i<n) and ((start+i)<words.Count) do
+  begin
+    s:=s+Separator+words[start+i];
+    i:=i+1;
+
+  end;
+  Result:=s;
+end;
+
+function listToString(words:TStrings;Separator:String):String;
+var
+  i:Integer;
+  s:String;
+begin
+  if(words.Count>0) then
+  begin
+    s:=words[0];
+  end
+  else
+  begin
+    s:='';
+  end;
+  for i := 1 to words.Count-1 do
+  begin
+    s:=s+Separator+words[i];
+  end;
+  Result:=s;
+end;
+
+procedure lemmatize(words:TStrings;Dictionary:TFDTable;lemmas:TStrings);
+var
+  i:Integer;
+begin
+  for i := 0 to words.Count-1 do
+  begin
+    lemmas.Add(lemmatizeMe(words[i],Dictionary));
+  end;
+
+end;
+
+procedure loadFromDump(key:String;target:TFDTable;Query:TFDQuery;con:TFDConnection);
+var
+   myFile : TextFile;
+   line: String;
+   cmd: String;
+begin
+   //target.Locate('name',key,[]);
+   con.Connected:=false;
+   con.Params.DriverID:='SQLite';
+   con.Params.Database:='$(RUN)/dbs/'+target.FieldByName('name').AsString+'.db3';
+   con.Connected:=true;
+   con.Commit;
+   //target.Active:=true;
+   if target.FieldByName('loaded').AsInteger=0 then
+   begin
+     line:=GetCurrentDir();
+
+     AssignFile(myFile, 'dbs/dumps/'+target.FieldByName('path').AsString);
+     Reset(myFile);
+     // Display the file contents
+     cmd:='';
+     while not Eof(myFile) do
+     begin
+       ReadLn(myFile, line);
+       if NOT(AnsiContainsStr(line,'INDEX')) then
+       begin
+        cmd:=cmd+line;
+       end
+       else
+       begin
+         cmd:=Trim(cmd);
+         if(AnsiEndsStr(',',cmd) ) then
+          cmd:=AnsiMidStr(cmd,1,Length(cmd)-1);
+       end;
+       if(AnsiEndsStr(';',line)) then
+       begin
+        //Update database
+        if NOT (AnsiStartsStr('DROP',cmd)) then
+        begin
+          if(AnsiContainsStr(cmd,'MimeToBin(')) then
+          begin
+             cmd:=AnsiReplaceStr(cmd,'MimeToBin(','');
+             cmd:=AnsiReplaceStr(cmd,');',';');
+          end;
+          Query.SQL.Clear;
+          Query.SQL.Append(cmd);
+          Query.ExecSQL;
+
+        end;
+         cmd:='';
+       end;
+     end;
+     Query.ExecSQL('CREATE TABLE MORPH (base VARCHAR(30), morph VARCHAR(30),tag VARCHAR(10));');
+     con.Commit;
+     target.Edit;
+     target.fieldValues['loaded']:=1;
+     target.Post;
+     CloseFile(myFile);
+   end;
+end;
+
+procedure tokenizeMe(Line:String;List:TStrings);
+const
+  Separators: array of String =[';',',','.',':','?','¿','[',']','{','}','_','^','!','°','|','"','#','$','%','&','(',')','=','?','¡','¿','''','+','*','>','<'];
+  Spaces: array of String = [' ',string(Chr(9)),slineBreak];
+var
+  i:Integer;
+  current:String;
+  word:String;
+begin
+  word:='';
+  for i:=1 to Line.Length do
+  begin
+    current:=String(Line[i]);
+    if(AnsiMatchStr(current,Separators) or AnsiMatchStr(current,Spaces)) then
+    begin
+      List.Append(word);
+      word:='';
+    end
+    else
+    begin
+      word:=word+current;
+    end;
+  end;
+  if not word.Equals('') then
+  begin
+    List.Append(word);
+  end;
+end;
+
+function lemmatizeMe(word:String;Dictionary:TFDTable):String;
+begin
+  if Dictionary.Locate('morph',AnsiLowerCase(word),[]) then
+  begin
+    Result:=Dictionary.FieldByName('base').AsString;
+  end
+  else
+  begin
+    Result:=word;
+  end;
+end;
+
+procedure getUses(lemmas:TStrings;Query:TFDQuery);
+var
+  i:Integer;
+  n:Integer;
+begin
+  n:=3;
+  i:=0;
+
+
+end;
+
+
+procedure getVariantes(words:TStrings;lemmas:TStrings;variante:TFDTable;variantes:TStrings;paises:String;varpaises:TFDTable);
+var i:Integer;
+var sel:String;
+var max:Integer;
+var j:Integer;
+begin
+   variante.Active:=false;
+   variante.TableName:='VARIANTE';
+   variante.Active:=true;
+   i:=0;
+   while i<lemmas.Count do
+   begin
+      variante.Filtered:=false;
+      variante.Filter:='PrimerLemma='+QuotedStr(lemmas[i]);
+      variante.Filtered:=true;
+      if variante.RecordCount = 0 then
+      begin
+        variantes.Add('');
+        i:=i+1;
+      end
+      else
+      begin
+         sel:='';
+         max:=0;
+         variante.First;
+         while not variante.Eof do
+         begin
+            if listNToString(lemmas,' ',i,variante.FieldByName('Palabras').AsInteger)= variante.FieldByName('Lemmas').AsString then
+            begin
+              if (max<variante.FieldByName('Palabras').AsInteger) or (listNToString(words,' ',i,variante.FieldByName('Palabras').AsInteger)= variante.FieldByName('Variante').AsString) then
+              begin
+                if isValid(variante.FieldByName('Clave_Variante').AsString,paises,varpaises) then
+                begin
+                  sel:=variante.FieldByName('Clave_Variante').AsString;
+                  max:=variante.FieldByName('Palabras').AsInteger
+                end;
+              end;
+            end;
+            variante.Next;
+         end;
+         if sel='' then
+         begin
+           i:=i+1;
+         end
+         else
+         begin
+           for j := 1 to max do
+           begin
+            variantes.Add(sel);
+           end;
+           i:=i+max;
+         end;
+      end;
+      variante.Filtered:=false;
+
+   end;
+
+end;
+
+function filterPaises(paises:TStrings;Pais:TFDTable):String;
+var
+  condiciones:TStrings;
+  i:Integer;
+begin
+  condiciones:=TStringList.Create;
+  Pais.Active:=true;
+  for i := 0 to paises.Count-1 do
+  begin
+    if Pais.Locate('Pais',paises[i],[]) then
+    begin
+      condiciones.Add('Clave_Pais='+QuotedStr(Pais.FieldByName('Clave_Pais').AsString));
+    end;
+  end;
+  Result:=ListToString(condiciones,' or ');
+end;
+
+procedure getUsos(variantes:TStrings;varpaises:TFDTable;usos:TStrings);
+var
+  Condiciones:TStrings;
+  i:Integer;
+begin
+  for i:=0 to variantes.Count-1 do
+  begin
+    Condiciones.Add('Clave_Variante='+variantes[i]);
+  end;
+  varpaises.Filtered:=false;
+  varpaises.Filter:=ListToString(Condiciones,' or ');
+  varpaises.Filtered:=true;
+  varpaises.First;
+  while not varpaises.Eof do
+  begin
+    usos.Add(varpaises.FieldByName('Clave_Uso').AsString);
+  end;
+end;
+
+procedure getConceptos(variantes:TStrings;variante:TFDTable;conceptos:TStrings);
+var
+  Condiciones:TStrings;
+  i:Integer;
+begin
+  for i:=0 to variantes.Count-1 do
+  begin
+    Condiciones.Add('Clave_Variante='+variantes[i]);
+  end;
+  variante.Filtered:=false;
+  variante.Filter:=ListToString(Condiciones,' or ');
+  variante.Filtered:=true;
+  variante.First;
+  while not variante.Eof do
+  begin
+    conceptos.Add(variante.FieldByName('Clave_Concepto').AsString);
+  end;
+end;
+
+function isValid(clave_variante:String;paises:String;varpaises:TFDTable):Boolean;
+begin
+  varpaises.Active:=true;
+  varpaises.Filtered:=false;
+  if varpaises.Filter<>paises then
+  begin
+    varpaises.Filter:=paises;
+  end;
+  varpaises.Filtered:=true;
+  Result:=varpaises.Locate('Clave_Variante',clave_variante,[]);
+end;
+
+end.

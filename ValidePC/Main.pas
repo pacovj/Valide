@@ -1,0 +1,181 @@
+unit Main;
+
+interface
+
+uses
+  ValideLogic,Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, FireDAC.Stan.Intf, FireDAC.Stan.Option,
+  FireDAC.Stan.Error, FireDAC.UI.Intf, FireDAC.Phys.Intf, FireDAC.Stan.Def,
+  FireDAC.Stan.Pool, FireDAC.Stan.Async, FireDAC.Phys, FireDAC.VCLUI.Wait,
+  Data.DB, FireDAC.Comp.Client, Vcl.Imaging.jpeg, Vcl.ExtCtrls,
+  FireDAC.Stan.ExprFuncs, FireDAC.Phys.SQLiteDef, FireDAC.Phys.SQLite,
+  FireDAC.Stan.Param, FireDAC.DatS, FireDAC.DApt.Intf, FireDAC.DApt,
+  Vcl.StdCtrls, Vcl.DBCtrls, FireDAC.Comp.DataSet, Vcl.Menus, Vcl.Buttons,
+  Vcl.Imaging.pngimage, Vcl.ComCtrls, DateUtils;
+
+type
+  TForm1 = class(TForm)
+    Image1: TImage;
+    sqliteDriver: TFDPhysSQLiteDriverLink;
+    ValideBase: TFDConnection;
+    Catalogos: TFDTable;
+    Origen: TDataSource;
+    GroupBox1: TGroupBox;
+    Label1: TLabel;
+    MainConnection: TFDConnection;
+    Query: TFDQuery;
+    Label2: TLabel;
+    Label3: TLabel;
+    PopupMenu1: TPopupMenu;
+    Coloquial1: TMenuItem;
+    Coloquialrestringido1: TMenuItem;
+    Formal1: TMenuItem;
+    General1: TMenuItem;
+    Grosero1: TMenuItem;
+    Pasivo1: TMenuItem;
+    Image3: TImage;
+    Image2: TImage;
+    Image4: TImage;
+    Image5: TImage;
+    Image6: TImage;
+    Image7: TImage;
+    RichEdit1: TRichEdit;
+    Morph: TFDTable;
+    variante: TFDTable;
+    varpaises: TFDTable;
+    pais: TFDTable;
+    DCatalogos: TDataSource;
+    DBLookupComboBox1: TDBLookupComboBox;
+    DBLookupComboBox2: TDBLookupComboBox;
+    DBLookupComboBox3: TDBLookupComboBox;
+    pais2: TFDTable;
+    Destino: TDataSource;
+    FileOpenDialog1: TFileOpenDialog;
+    procedure FormCreate(Sender: TObject);
+    procedure Image6Click(Sender: TObject);
+    procedure FileOpenDialog1FileOkClick(Sender: TObject;
+      var CanClose: Boolean);
+    procedure CatalogosAfterScroll(DataSet: TDataSet);
+    procedure DBLookupComboBox1Click(Sender: TObject);
+    procedure RichEdit1Change(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+    Load:Boolean;
+    LastEdit:TDateTime;
+    LastLine:Integer;
+  end;
+
+var
+  Form1: TForm1;
+
+implementation
+
+{$R *.dfm}
+
+
+procedure TForm1.CatalogosAfterScroll(DataSet: TDataSet);
+begin
+   if Form1.Load then
+   begin
+     Form1.Load:=false;
+     loadFromDump(DBLookupComboBox1.KeyValue,Form1.Catalogos,Form1.Query,Form1.MainConnection);
+     Pais.Active:=true;
+     Pais2.Active:=true;
+     Form1.DBLookupComboBox2.KeyValue:='México';
+     Form1.DBLookupComboBox3.KeyValue:='México';
+     loadDictionary(Form1.Morph);
+     loadCollocations(Form1.Catalogos,Form1.Query,Form1.variante,Form1.Morph);
+   end;
+end;
+
+procedure TForm1.DBLookupComboBox1Click(Sender: TObject);
+begin
+  Form1.Load:=true;
+end;
+
+procedure TForm1.FileOpenDialog1FileOkClick(Sender: TObject;
+  var CanClose: Boolean);
+var
+  myFile : TextFile;
+  text   : string;
+begin
+  AssignFile(myFile, Form1.FileOpenDialog1.FileName);
+  Reset(myFile);
+  Form1.RichEdit1.Clear;
+  while not Eof(myFile) do
+  begin
+    ReadLn(myFile, text);
+    Form1.LastEdit:=Yesterday;
+    Form1.RichEdit1.Lines.Append(text);
+  end;
+  Form1.RichEdit1.SelStart:=0;
+  // Close the file for the last time
+  CloseFile(myFile);
+end;
+
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+  Form1.ValideBase.Connected:=true;
+  Form1.Catalogos.Active:=true;
+  Form1.Load:=true;
+  Form1.DBLookupComboBox1.KeyValue:='ValideANA';
+  Form1.LastEdit:=Now;
+  Form1.LastLine:=RichEdit1.Perform(EM_LINEFROMCHAR, RichEdit1.SelStart, 0);
+end;
+
+procedure TForm1.Image6Click(Sender: TObject);
+begin
+  Form1.FileOpenDialog1.Execute;
+end;
+
+procedure TForm1.RichEdit1Change(Sender: TObject);
+var
+  LineNo:Integer;
+  Edit:TDateTime;
+  list:TStrings;
+  lemmas:TStrings;
+  variantes:TStrings;
+  paises:TStrings;
+  i:Integer;
+  idx:Integer;
+  old:Integer;
+begin
+  Edit:=Now;
+  LineNo:=RichEdit1.Perform(EM_LINEFROMCHAR, RichEdit1.SelStart, 0);
+  if (LineNo<>Form1.LastLine) or (DateUtils.MilliSecondsBetween(Edit, Form1.LastEdit)>1000) then
+  begin
+    if RichEdit1.Lines[Form1.LastLine]<>'' then
+    begin
+      list:=TStringList.Create;
+      lemmas:=TStringList.Create;
+      variantes:=TStringList.Create;
+      paises:=TStringList.Create;
+      paises.Add(Form1.DBLookupComboBox2.KeyValue);
+      tokenizeMe(RichEdit1.Lines[Form1.LastLine],list);
+      lemmatize(list,Form1.Morph,lemmas);
+      getVariantes(list,lemmas,Form1.variante,variantes,filterPaises(paises,Form1.pais),Form1.varpaises);
+      RichEdit1.Enabled:=false;
+      old:=RichEdit1.SelStart;
+      for i := 0 to variantes.Count-1 do
+      begin
+        if variantes[i]<>'' then
+        begin
+          idx:=AnsiPos(list[i],RichEdit1.Lines[Form1.LastLine]);
+          RichEdit1.SelStart:=RichEdit1.Perform(EM_LINEINDEX,Form1.LastLine,0)+idx-1;
+          RichEdit1.SelLength:=Length(list[i]);
+
+          RichEdit1.SelAttributes.Color:=clBlue;
+        end;
+      end;
+      RichEdit1.Enabled:=true;
+      RichEdit1.SelStart:=old;
+    end;
+  end;
+  Form1.LastEdit:=Edit;
+  Form1.LastLine:=LineNo;
+end;
+
+
+end.
