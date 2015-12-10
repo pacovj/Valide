@@ -3940,7 +3940,6 @@ object Form1: TForm1
       C0FF07C83F8E637842AEB40000000049454E44AE426082}
     PopupMenu = PopupMenu1
     Proportional = True
-    OnClick = Image5Click
   end
   object Image6: TImage
     Left = 0
@@ -5417,11 +5416,5 @@ object Form1: TForm1
     OnFileOkClick = FileSaveDialog1FileOkClick
     Left = 728
     Top = 536
-  end
-  object Timer1: TTimer
-    Enabled = False
-    OnTimer = Timer1Timer
-    Left = 576
-    Top = 24
   end
 end

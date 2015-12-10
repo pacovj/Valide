@@ -132,7 +132,6 @@ var
 begin
   AssignFile(myFile, Form1.FileOpenDialog1.FileName);
   Reset(myFile);
-  Form1.RichEdit1.OnChange:=nil;
   Form1.RichEdit1.Clear;
 
   i:=0;
@@ -140,13 +139,11 @@ begin
   begin
     ReadLn(myFile, text);
     Form1.RichEdit1.Enabled:=false;
-    Form1.RichEdit1.OnChange:=nil;
     Form1.RichEdit1.Lines.Append(text);
     Form1.paintLine(i);
     Form1.RichEdit1.Enabled:=true;
     i:=i+1;
   end;
-  Form1.RichEdit1.OnChange:=Form1.RichEdit1Change;
   Form1.RichEdit1.SelStart:=0;
   // Close the file for the last time
   CloseFile(myFile);
@@ -187,15 +184,17 @@ procedure TForm1.RichEdit1Change(Sender: TObject);
 var
   LineNo:Integer;
 begin
-  Form1.LastEdit:=Now;
   LineNo:=RichEdit1.Perform(EM_LINEFROMCHAR, RichEdit1.SelStart, 0);
   if (Form1.LastLine<>LineNo) and (Form1.LastText<>RichEdit1.Lines[Form1.LastLine]) then
   begin
     paintLine(LastLine);
-  end;
+  end
   if not Timer1.Enabled then
      Timer1.Enabled:=true;
+  end;
   Form1.LastEdit:=Now;
+
+
 end;
 
 procedure TForm1.subraya(uso:String);
@@ -292,8 +291,8 @@ var
   variantes:TStrings;
   variantesD:TStrings;
   old:Integer;
+
 begin
-  Form1.RichEdit1.OnChange:=nil;
   list:=TStringList.Create;
   pos:=TStringList.Create;
   lemmas:=TStringList.Create;
@@ -315,15 +314,10 @@ begin
   //pinta pais destino como subrayado
   paintVariante(line,variantesD,list,pos,false);
   RichEdit1.Enabled:=true;
-  RichEdit1.SetFocus;
   RichEdit1.SelLength:=0;
   RichEdit1.SelStart:=old;
-  RichEdit1.SelAttributes.Color:=clBlack;
-  subraya('normal');
   Form1.LastLine:=line;
   Form1.LastText:=RichEdit1.Lines[line];
-  Form1.RichEdit1.OnChange:=Form1.RichEdit1Change;
-
 end;
 
 procedure TForm1.pinta(uso:String;tipo:Boolean);

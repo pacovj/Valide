@@ -5418,10 +5418,4 @@ object Form1: TForm1
     Left = 728
     Top = 536
   end
-  object Timer1: TTimer
-    Enabled = False
-    OnTimer = Timer1Timer
-    Left = 576
-    Top = 24
-  end
 end

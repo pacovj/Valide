@@ -2371,7 +2371,6 @@ object Form1: TForm1
       000049454E44AE426082}
     PopupMenu = PopupMenu1
     Proportional = True
-    OnClick = Image4Click
   end
   object Image5: TImage
     Left = 0
@@ -3940,7 +3939,6 @@ object Form1: TForm1
       C0FF07C83F8E637842AEB40000000049454E44AE426082}
     PopupMenu = PopupMenu1
     Proportional = True
-    OnClick = Image5Click
   end
   object Image6: TImage
     Left = 0
@@ -5237,7 +5235,6 @@ object Form1: TForm1
       ListField = 'Pais'
       ListSource = Origen
       TabOrder = 1
-      OnClick = DBLookupComboBox2Click
     end
     object DBLookupComboBox3: TDBLookupComboBox
       Left = 720
@@ -5248,7 +5245,6 @@ object Form1: TForm1
       ListField = 'Pais'
       ListSource = Destino
       TabOrder = 2
-      OnClick = DBLookupComboBox3Click
     end
   end
   object RichEdit1: TRichEdit
@@ -5402,26 +5398,5 @@ object Form1: TForm1
     OnFileOkClick = FileOpenDialog1FileOkClick
     Left = 656
     Top = 408
-  end
-  object Color: TFDTable
-    Connection = MainConnection
-    UpdateOptions.UpdateTableName = 'ctlUso'
-    TableName = 'ctlUso'
-    Left = 648
-    Top = 520
-  end
-  object FileSaveDialog1: TFileSaveDialog
-    FavoriteLinks = <>
-    FileTypes = <>
-    Options = []
-    OnFileOkClick = FileSaveDialog1FileOkClick
-    Left = 728
-    Top = 536
-  end
-  object Timer1: TTimer
-    Enabled = False
-    OnTimer = Timer1Timer
-    Left = 576
-    Top = 24
   end
 end

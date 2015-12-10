@@ -315,7 +315,7 @@ begin
   //pinta pais destino como subrayado
   paintVariante(line,variantesD,list,pos,false);
   RichEdit1.Enabled:=true;
-  RichEdit1.SetFocus;
+    RichEdit1.SetFocus;
   RichEdit1.SelLength:=0;
   RichEdit1.SelStart:=old;
   RichEdit1.SelAttributes.Color:=clBlack;

@@ -29,7 +29,6 @@ procedure loadDictionary(target:TFDTable);
 var
   myFile : TextFile;
   list : TStrings;
-  pos : TStrings;
   line : UTF8String;
   i:Integer;
 begin
@@ -41,13 +40,11 @@ begin
      Reset(myFile);
      // Display the file contents
      list:=TStringList.Create;
-     pos:=TStringList.Create;
      while not Eof(myFile) do
      begin
         ReadLn(myFile, line);
         list.Clear;
-        pos.Clear;
-        tokenizeMe(line,pos,list);
+        tokenizeMe(line,list);
         target.Insert;
         target.FieldValues['base']:=list[1];
         target.FieldValues['morph']:=list[0];
@@ -63,7 +60,6 @@ procedure loadCollocations(target:TFDTable;Query:TFDQuery;variante:TFDTable;dict
 var
   toks:TStrings;
   lemmas:TStrings;
-  pos:TStrings;
 begin
   if target.FieldByName('parsed').AsInteger=0 then
    begin
@@ -75,14 +71,12 @@ begin
       variante.First;
       toks:=TStringList.Create;
       lemmas:=TStringList.Create;
-      pos:=TStringList.Create;
       while not variante.Eof do
       begin
         toks.Clear;
-        pos.Clear;
         lemmas.Clear;
         variante.Edit;
-        tokenizeMe(variante.FieldValues['Variante'],pos,toks);
+        tokenizeMe(variante.FieldValues['Variante'],toks);
         lemmatize(toks,dictionary,lemmas);
         variante.FieldValues['Palabras']:=toks.Count;
         variante.FieldValues['Lemmas']:=listToString(lemmas,' ');
@@ -227,7 +221,7 @@ begin
         Pos.Append(IntToStr(last));
       end;
       word:='';
-      last:=i;
+      last:=i+1;
     end
     else
     begin

@@ -6,18 +6,19 @@ FireDAC.Comp.Client,System.StrUtils,SysUtils,Dialogs,Vcl.StdCtrls,Classes;
 
 procedure loadFromDump(key:String;target:TFDTable;Query:TFDQuery;con:TFDConnection);
 procedure loadDictionary(target:TFDTable);
+procedure tokenizeMe(Line:String;List:TStrings);
 function lemmatizeMe(word:String;Dictionary:TFDTable):String;
 procedure lemmatize(words:TStrings;Dictionary:TFDTable;lemmas:TStrings);
 procedure getUses(lemmas:TStrings;Query:TFDQuery);
 procedure loadCollocations(target:TFDTable;Query:TFDQuery;variante:TFDTable;dictionary:TFDTable);
 function listToString(words:TStrings;Separator:String):String;
 function listNToString(words:TStrings;Separator:String;start:Integer;n:Integer):String;
-procedure tokenizeMe(Line:String;Pos:TStrings;List:TStrings);
+
 
 procedure getVariantes(words:TStrings;lemmas:TStrings;variante:TFDTable;variantes:TStrings;paises:String;varpaises:TFDTable);
 function filterPaises(paises:TStrings;Pais:TFDTable):String;
 function isValid(clave_variante:String;paises:String;varpaises:TFDTable):Boolean;
-procedure getUsos(variante:String;pais:String;varpaises:TFDTable;usos:TStrings);
+procedure getUsos(variante:String;varpaises:TFDTable;usos:TStrings);
 
 procedure getConceptos(variantes:TStrings;variante:TFDTable;conceptos:TStrings);
 
@@ -29,7 +30,6 @@ procedure loadDictionary(target:TFDTable);
 var
   myFile : TextFile;
   list : TStrings;
-  pos : TStrings;
   line : UTF8String;
   i:Integer;
 begin
@@ -41,13 +41,11 @@ begin
      Reset(myFile);
      // Display the file contents
      list:=TStringList.Create;
-     pos:=TStringList.Create;
      while not Eof(myFile) do
      begin
         ReadLn(myFile, line);
         list.Clear;
-        pos.Clear;
-        tokenizeMe(line,pos,list);
+        tokenizeMe(line,list);
         target.Insert;
         target.FieldValues['base']:=list[1];
         target.FieldValues['morph']:=list[0];
@@ -63,7 +61,6 @@ procedure loadCollocations(target:TFDTable;Query:TFDQuery;variante:TFDTable;dict
 var
   toks:TStrings;
   lemmas:TStrings;
-  pos:TStrings;
 begin
   if target.FieldByName('parsed').AsInteger=0 then
    begin
@@ -75,14 +72,12 @@ begin
       variante.First;
       toks:=TStringList.Create;
       lemmas:=TStringList.Create;
-      pos:=TStringList.Create;
       while not variante.Eof do
       begin
         toks.Clear;
-        pos.Clear;
         lemmas.Clear;
         variante.Edit;
-        tokenizeMe(variante.FieldValues['Variante'],pos,toks);
+        tokenizeMe(variante.FieldValues['Variante'],toks);
         lemmatize(toks,dictionary,lemmas);
         variante.FieldValues['Palabras']:=toks.Count;
         variante.FieldValues['Lemmas']:=listToString(lemmas,' ');
@@ -204,7 +199,7 @@ begin
    end;
 end;
 
-procedure tokenizeMe(Line:String;Pos:TStrings;List:TStrings);
+procedure tokenizeMe(Line:String;List:TStrings);
 const
   Separators: array of String =[';',',','.',':','?','¿','[',']','{','}','_','^','!','°','|','"','#','$','%','&','(',')','=','?','¡','¿','''','+','*','>','<'];
   Spaces: array of String = [' ',string(Chr(9)),slineBreak];
@@ -212,22 +207,15 @@ var
   i:Integer;
   current:String;
   word:String;
-  last:Integer;
 begin
   word:='';
-  last:=0;
   for i:=1 to Line.Length do
   begin
     current:=String(Line[i]);
     if(AnsiMatchStr(current,Separators) or AnsiMatchStr(current,Spaces)) then
     begin
-      if word<>'' then
-      begin
-        List.Append(word);
-        Pos.Append(IntToStr(last));
-      end;
+      List.Append(word);
       word:='';
-      last:=i;
     end
     else
     begin
@@ -237,7 +225,6 @@ begin
   if not word.Equals('') then
   begin
     List.Append(word);
-    Pos.Append(IntToStr(last));
   end;
 end;
 
@@ -308,7 +295,6 @@ begin
          if sel='' then
          begin
            i:=i+1;
-           variantes.Add('');
          end
          else
          begin
@@ -342,18 +328,17 @@ begin
   Result:=ListToString(condiciones,' or ');
 end;
 
-procedure getUsos(variante:String;pais:String;varpaises:TFDTable;usos:TStrings);
+procedure getUsos(variante:String;varpaises:TFDTable;usos:TStrings);
 var
   i:Integer;
 begin
   varpaises.Filtered:=false;
-  varpaises.Filter:='Clave_Variante='+variante+' and Clave_Pais='+QuotedStr(pais);
+  varpaises.Filter:='Clave_Variante='+variante;
   varpaises.Filtered:=true;
   varpaises.First;
   while not varpaises.Eof do
   begin
     usos.Add(varpaises.FieldByName('Clave_Uso').AsString);
-    varpaises.Next;
   end;
 end;
 
