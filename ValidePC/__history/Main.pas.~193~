@@ -54,7 +54,6 @@ type
     Color: TFDTable;
     FileSaveDialog1: TFileSaveDialog;
     Timer1: TTimer;
-    synonimos: TPopupMenu;
     procedure FormCreate(Sender: TObject);
     procedure Image6Click(Sender: TObject);
     procedure FileOpenDialog1FileOkClick(Sender: TObject;
@@ -70,8 +69,6 @@ type
     procedure Image5Click(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
     procedure Coloquial1Click(Sender: TObject);
-    procedure RichEdit1ContextPopup(Sender: TObject; MousePos: TPoint;
-      var Handled: Boolean);
   private
     { Private declarations }
   public
@@ -116,13 +113,12 @@ procedure TForm1.Coloquial1Click(Sender: TObject);
 var
   s:TMenuItem;
 begin
-  Form1.PopupMenu1.Popup(Form1.PopupMenu1.PopupPoint.X,PopupMenu1.PopupPoint.Y);
   s:=(Sender as TMenuItem);
   if s.Checked then
     s.Checked:=false
   else
     s.Checked:=true;
-
+  Form1.PopupMenu1.Popup(Form1.PopupMenu1.PopupPoint.X,PopupMenu1.PopupPoint.Y);
 end;
 
 procedure TForm1.DBLookupComboBox1Click(Sender: TObject);
@@ -221,17 +217,6 @@ begin
   Form1.LastEdit:=Now;
 end;
 
-procedure TForm1.RichEdit1ContextPopup(Sender: TObject; MousePos: TPoint;
-  var Handled: Boolean);
-var
-  item:tMenuItem;
- begin
-  item:=tMenuItem.Create(synonimos);
-  RichEdit1.SelLength:=RichEdit1.Perform(EM_CHARFROMPOS, 0, Integer(@MousePos));
-  item.Caption:=RichEdit1.SelText;
-  synonimos.Items.Add(item);
-end;
-
 procedure TForm1.subraya(uso:String);
 var
   Format:CHARFORMAT2;
@@ -295,7 +280,7 @@ end;
 
 procedure TForm1.Timer1Timer(Sender: TObject);
 begin
-  if DateUtils.MilliSecondsBetween(Now, Form1.LastEdit)>Timer1.Interval then
+  if DateUtils.MilliSecondsBetween(Now, Form1.LastEdit)>1000 then
   begin
     if (RichEdit1.Lines[Form1.LastLine]<>'') and (Length(RichEdit1.Lines[Form1.LastLine])>2) then
     begin

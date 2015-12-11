@@ -54,7 +54,6 @@ type
     Color: TFDTable;
     FileSaveDialog1: TFileSaveDialog;
     Timer1: TTimer;
-    synonimos: TPopupMenu;
     procedure FormCreate(Sender: TObject);
     procedure Image6Click(Sender: TObject);
     procedure FileOpenDialog1FileOkClick(Sender: TObject;
@@ -70,8 +69,6 @@ type
     procedure Image5Click(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
     procedure Coloquial1Click(Sender: TObject);
-    procedure RichEdit1ContextPopup(Sender: TObject; MousePos: TPoint;
-      var Handled: Boolean);
   private
     { Private declarations }
   public
@@ -219,17 +216,6 @@ begin
   if not Timer1.Enabled then
      Timer1.Enabled:=true;
   Form1.LastEdit:=Now;
-end;
-
-procedure TForm1.RichEdit1ContextPopup(Sender: TObject; MousePos: TPoint;
-  var Handled: Boolean);
-var
-  item:tMenuItem;
- begin
-  item:=tMenuItem.Create(synonimos);
-  RichEdit1.SelLength:=RichEdit1.Perform(EM_CHARFROMPOS, 0, Integer(@MousePos));
-  item.Caption:=RichEdit1.SelText;
-  synonimos.Items.Add(item);
 end;
 
 procedure TForm1.subraya(uso:String);

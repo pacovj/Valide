@@ -227,7 +227,7 @@ var
   item:tMenuItem;
  begin
   item:=tMenuItem.Create(synonimos);
-  RichEdit1.SelLength:=RichEdit1.Perform(EM_CHARFROMPOS, 0, Integer(@MousePos));
+  RichEdit1.SelLength:=RichEdit1.Perform(EM_CHARFROMPOS, 0, Integer(@MousePos));;
   item.Caption:=RichEdit1.SelText;
   synonimos.Items.Add(item);
 end;

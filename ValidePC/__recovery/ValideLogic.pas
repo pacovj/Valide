@@ -206,7 +206,7 @@ end;
 
 procedure tokenizeMe(Line:String;Pos:TStrings;List:TStrings);
 const
-  Separators: array of String =[';',',','.',':','?','¿','[',']','{','}','_','^','!','°','|','"','#','$','%','&','(',')','=','?','¡','¿','''','+','*','>','<'];
+  Separators: array of String =[';',',','.',':','?','Â¿','[',']','{','}','_','^','!','Â°','|','"','#','$','%','&','(',')','=','?','Â¡','Â¿','''','+','*','>','<'];
   Spaces: array of String = [' ',string(Chr(9)),slineBreak];
 var
   i:Integer;
@@ -283,6 +283,7 @@ begin
       if variante.RecordCount = 0 then
       begin
         variantes.Add('');
+        Clength.Add('0');
         i:=i+1;
       end
       else

@@ -14,7 +14,7 @@ function listToString(words:TStrings;Separator:String):String;
 function listNToString(words:TStrings;Separator:String;start:Integer;n:Integer):String;
 procedure tokenizeMe(Line:String;Pos:TStrings;List:TStrings);
 
-procedure getVariantes(words:TStrings;lemmas:TStrings;variante:TFDTable;variantes:TStrings;paises:String;varpaises:TFDTable;Clength:TStrings);
+procedure getVariantes(words:TStrings;lemmas:TStrings;variante:TFDTable;variantes:TStrings;paises:String;varpaises:TFDTable;length;TStrings);
 function filterPaises(paises:TStrings;Pais:TFDTable):String;
 function isValid(clave_variante:String;paises:String;varpaises:TFDTable):Boolean;
 procedure getUsos(variante:String;pais:String;varpaises:TFDTable;usos:TStrings);
@@ -265,7 +265,7 @@ begin
 end;
 
 
-procedure getVariantes(words:TStrings;lemmas:TStrings;variante:TFDTable;variantes:TStrings;paises:String;varpaises:TFDTable;Clength:TStrings);
+procedure getVariantes(words:TStrings;lemmas:TStrings;variante:TFDTable;variantes:TStrings;paises:String;varpaises:TFDTable;length;TStrings);
 var i:Integer;
 var sel:String;
 var max:Integer;
@@ -309,13 +309,13 @@ begin
          begin
            i:=i+1;
            variantes.Add('');
-           Clength.Add('0');
+           length.Add('0')
          end
          else
          begin
            for j := 1 to max do
            begin
-            Clength.Add(IntToStr(max));
+            length.Add(IntToStr(max))
             variantes.Add(sel);
            end;
            i:=i+max;

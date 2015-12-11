@@ -5264,11 +5264,9 @@ object Form1: TForm1
     Lines.Strings = (
       'RichEdit1')
     ParentFont = False
-    PopupMenu = synonimos
     TabOrder = 1
     Zoom = 100
     OnChange = RichEdit1Change
-    OnContextPopup = RichEdit1ContextPopup
   end
   object sqliteDriver: TFDPhysSQLiteDriverLink
     Left = 8
@@ -5330,32 +5328,26 @@ object Form1: TForm1
     object Coloquial1: TMenuItem
       Caption = 'Coloquial'
       Checked = True
-      OnClick = Coloquial1Click
     end
     object Coloquialrestringido1: TMenuItem
       Caption = 'Coloquial restringido'
       Checked = True
-      OnClick = Coloquial1Click
     end
     object Formal1: TMenuItem
       Caption = 'Formal'
       Checked = True
-      OnClick = Coloquial1Click
     end
     object General1: TMenuItem
       Caption = 'General'
       Checked = True
-      OnClick = Coloquial1Click
     end
     object Grosero1: TMenuItem
       Caption = 'Grosero'
       Checked = True
-      OnClick = Coloquial1Click
     end
     object Pasivo1: TMenuItem
       Caption = 'Pasivo'
       Checked = True
-      OnClick = Coloquial1Click
     end
   end
   object Morph: TFDTable
@@ -5432,9 +5424,5 @@ object Form1: TForm1
     OnTimer = Timer1Timer
     Left = 576
     Top = 24
-  end
-  object synonimos: TPopupMenu
-    Left = 440
-    Top = 528
   end
 end

@@ -225,9 +225,15 @@ procedure TForm1.RichEdit1ContextPopup(Sender: TObject; MousePos: TPoint;
   var Handled: Boolean);
 var
   item:tMenuItem;
- begin
+  X:Integer;
+  Y:Integer;
+  Z:Integer;
+begin
   item:=tMenuItem.Create(synonimos);
-  RichEdit1.SelLength:=RichEdit1.Perform(EM_CHARFROMPOS, 0, Integer(@MousePos));
+  X:=MousePos.X;
+  Y:=MousePos.Y;
+  Z:=RichEdit1.Perform(EM_CHARFROMPOS, 0, (X and $FFFF) or ((Y and $FFFF) shl 16));
+  RichEdit1.SelLength:=2;
   item.Caption:=RichEdit1.SelText;
   synonimos.Items.Add(item);
 end;

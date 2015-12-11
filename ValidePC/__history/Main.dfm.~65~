@@ -5264,11 +5264,9 @@ object Form1: TForm1
     Lines.Strings = (
       'RichEdit1')
     ParentFont = False
-    PopupMenu = synonimos
     TabOrder = 1
     Zoom = 100
     OnChange = RichEdit1Change
-    OnContextPopup = RichEdit1ContextPopup
   end
   object sqliteDriver: TFDPhysSQLiteDriverLink
     Left = 8
@@ -5432,9 +5430,5 @@ object Form1: TForm1
     OnTimer = Timer1Timer
     Left = 576
     Top = 24
-  end
-  object synonimos: TPopupMenu
-    Left = 440
-    Top = 528
   end
 end

@@ -225,9 +225,9 @@ procedure TForm1.RichEdit1ContextPopup(Sender: TObject; MousePos: TPoint;
   var Handled: Boolean);
 var
   item:tMenuItem;
- begin
+begin
   item:=tMenuItem.Create(synonimos);
-  RichEdit1.SelLength:=RichEdit1.Perform(EM_CHARFROMPOS, 0, Integer(@MousePos));
+  RichEdit1.SelLength:=2;
   item.Caption:=RichEdit1.SelText;
   synonimos.Items.Add(item);
 end;
