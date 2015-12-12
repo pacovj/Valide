@@ -113,7 +113,7 @@ var
   item:tMenuItem;
 begin
   item:=(Sender as tMenuItem);
-  RichEdit1.SelText:=AnsiMidStr(item.Caption,2,Length(item.Caption)-1);
+  RichEdit1.SelText:=item.Caption;
   RichEdit1.SelLength:=0;
 end;
 
@@ -579,6 +579,14 @@ var
       end
       else
       begin
+        for i := 0 to (VMemory[line] as TObjectList<TStrings>).Count-1 do
+        begin
+
+           (VMemory[line] as TObjectList<TStrings>)[i].Clear;
+           (VMemory[line] as TObjectList<TStrings>)[i].Free;
+           (VDMemory[line] as TObjectList<TStrings>)[i].Clear;
+           (VDMemory[line] as TObjectList<TStrings>)[i].Free;
+        end;
         (VMemory[line] as TObjectList<TStrings>).Clear;
         LMemory[line].Clear;
         PMemory[line].Clear;

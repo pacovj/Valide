@@ -12,6 +12,7 @@ object Form1: TForm1
   Font.Style = []
   OldCreateOrder = False
   OnCreate = FormCreate
+  OnKeyPress = FormKeyPress
   PixelsPerInch = 96
   TextHeight = 13
   object Image1: TImage
@@ -5436,10 +5437,5 @@ object Form1: TForm1
   object synonimos: TPopupMenu
     Left = 440
     Top = 528
-  end
-  object ApplicationEvents1: TApplicationEvents
-    OnShortCut = ApplicationEvents1ShortCut
-    Left = 688
-    Top = 512
   end
 end

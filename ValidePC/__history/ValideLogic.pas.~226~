@@ -458,7 +458,7 @@ begin
     variante.Next;
   end;
   varpais.Filtered:=false;
-  varpais.Filter:='(Clave_Pais='+QuotedStr(paisOrigen)+' or Clave_Pais='+QuotedStr(paisDestino)+') and ('+ListToString(condiciones,' or ')+')';
+  varpais.Filter:='(Clave_Pais='+paisOrigen+' or Clave_Pais='+paisDestino+') and ('+ListToString(condiciones,'or')+')';
   varpais.Filtered:=true;
   varpais.First;
   while not varpais.Eof do

@@ -113,7 +113,7 @@ var
   item:tMenuItem;
 begin
   item:=(Sender as tMenuItem);
-  RichEdit1.SelText:=AnsiMidStr(item.Caption,2,Length(item.Caption)-1);
+  RichEdit1.SelText:=item.Caption;
   RichEdit1.SelLength:=0;
 end;
 
@@ -228,6 +228,7 @@ begin
   PMemory:=TObjectList<TStrings>.Create();
   VDMemory:=TObjectList<TObject>.Create();
   LDMemory:=TObjectList<TStrings>.Create();
+  Form1.KeyPreview := true;
 end;
 
 
@@ -535,7 +536,7 @@ end;
 
 procedure TForm1.Timer1Timer(Sender: TObject);
 begin
-  if (DateUtils.MilliSecondsBetween(Now, Form1.LastEdit)>Timer1.Interval) and (Form1.LastLine<RichEdit1.Lines.Count) then
+  if DateUtils.MilliSecondsBetween(Now, Form1.LastEdit)>Timer1.Interval then
   begin
     if (RichEdit1.Lines[Form1.LastLine]<>'') and (Length(RichEdit1.Lines[Form1.LastLine])>2) then
     begin
@@ -565,7 +566,7 @@ var
   old:Integer;
   i:Integer;
  begin
-  if (line<Form1.RichEdit1.Lines.Count) and (Form1.RichEdit1.Lines[line]<>'') then
+  if (line<Form1.RichEdit1.Lines.Count-1) and (Form1.RichEdit1.Lines[line]<>'') then
   begin
       Form1.RichEdit1.OnChange:=nil;
       if line>=VMemory.Count then
@@ -579,6 +580,14 @@ var
       end
       else
       begin
+        for i := 0 to (VMemory[line] as TObjectList<TStrings>).Count-1 do
+        begin
+
+           (VMemory[line] as TObjectList<TStrings>)[i].Clear;
+           (VMemory[line] as TObjectList<TStrings>)[i].Free;
+           (VDMemory[line] as TObjectList<TStrings>)[i].Clear;
+           (VDMemory[line] as TObjectList<TStrings>)[i].Free;
+        end;
         (VMemory[line] as TObjectList<TStrings>).Clear;
         LMemory[line].Clear;
         PMemory[line].Clear;

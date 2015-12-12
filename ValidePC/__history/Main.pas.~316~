@@ -113,7 +113,7 @@ var
   item:tMenuItem;
 begin
   item:=(Sender as tMenuItem);
-  RichEdit1.SelText:=AnsiMidStr(item.Caption,2,Length(item.Caption)-1);
+  RichEdit1.SelText:=item.Caption;
   RichEdit1.SelLength:=0;
 end;
 

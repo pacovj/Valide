@@ -395,7 +395,6 @@ var
 begin
   condiciones:=TStringList.Create;
   idconceptos:=TStringList.Create;
-  tconceptos:=TStringList.Create;
   tvariantes:=TObjectList<TStrings>.Create();
   ttext:=TObjectList<TStrings>.Create();
   for i:=0 to variantes.Count-1 do
@@ -408,9 +407,9 @@ begin
   variante.First;
   while not variante.Eof do
   begin
-    if not  AnsiMatchStr(variante.FieldByName('Clave_Concepto').AsString,idconceptos.ToStringArray) then
+    if not  AnsiMatchStr(variante.FieldValues['Clave_Concepto'].AsString,idconceptos.ToStringArray) then
     begin
-      idconceptos.Add('Clave_Concepto='+variante.FieldByName('Clave_Concepto').AsString);
+      idconceptos.Add('Clave_Concepto='+variante.FieldValues['Clave_Concepto'].AsString);
     end;
     variante.Next
   end;
@@ -420,10 +419,10 @@ begin
   condiciones.Clear;
   while not concepto.Eof do
   begin
-    if not AnsiMatchStr(concepto.FieldByName('Lengua_Control').AsString,conceptos.ToStringArray) then
+    if not AnsiMatchStr(concepto.FieldValues['Lengua_Control'].AsString,conceptos.ToStringArray) then
     begin
-      conceptos.Add(concepto.FieldByName('Lengua_Control').AsString);
-      condiciones.Add('Lengua_Control='+QuotedStr(concepto.FieldByName('Lengua_Control').AsString));
+      conceptos.Add(concepto.FieldValues['Lengua_Control'].AsString);
+      condiciones.Add('Lengua_Control='+QuotedStr(concepto.FieldValues['Lengua_Control'].AsString));
       syndestino.Add(TStringList.Create);
       synorigen.Add(TStringList.Create);
       tvariantes.Add(TStringList.Create);
@@ -438,10 +437,10 @@ begin
   idconceptos.Clear;
   while not concepto.Eof do
   begin
-     i:=AnsiIndexStr(concepto.FieldByName('Lengua_Control').AsString,conceptos.ToStringArray);
-     condiciones.Add('Clave_Concepto='+concepto.FieldByName('Clave_Concepto').AsString);
+     i:=AnsiIndexStr(concepto.FieldValues['Lengua_Control'],conceptos.ToStringArray);
+     condiciones.Add('Clave_Concepto='+concepto.FieldValues['Clave_Concepto'].AsString);
      idconceptos.Add(IntToStr(i));
-     tconceptos.Add(concepto.FieldByName('Clave_Concepto').AsString);
+     tconceptos.Add(concepto.FieldValues['Clave_Concepto']);
      concepto.Next;
   end;
   variante.Filtered:=false;
@@ -451,14 +450,14 @@ begin
   condiciones.Clear;
   while not variante.Eof do
   begin
-    condiciones.Add('Clave_Variante='+variante.FieldByName('Clave_Variante').AsString);
-    i:=AnsiIndexStr(variante.FieldByName('Clave_Concepto').AsString,tconceptos.ToStringArray);
-    tvariantes[i].Add(variante.FieldByName('Clave_Variante').AsString);
-    ttext[i].Add(variante.FieldByName('Variante').AsString);
+    condiciones.Add('Clave_Variante='+variante.FieldValues['Clave_Variante'].AsString);
+    i:=AnsiIndexStr(variante.FieldValues['Clave_Concepto'].AsString,tconceptos.ToStringArray);
+    tvariantes[i].Add(variante.FieldValues['Clave_Variante'].AsString);
+    ttext[i].Add(variante.FieldValues['Variante'].AsString);
     variante.Next;
   end;
   varpais.Filtered:=false;
-  varpais.Filter:='(Clave_Pais='+QuotedStr(paisOrigen)+' or Clave_Pais='+QuotedStr(paisDestino)+') and ('+ListToString(condiciones,' or ')+')';
+  varpais.Filter:='(Clave_Pais='+paisOrigen+' or Clave_Pais='+paisDestino+') and ('+ListToString(condiciones,'or')+')';
   varpais.Filtered:=true;
   varpais.First;
   while not varpais.Eof do
@@ -467,16 +466,16 @@ begin
     j:=0;
     while j<tvariantes.Count do
     begin
-      i:=AnsiIndexStr(varpais.FieldByName('Clave_Variante').AsString,tvariantes[j].ToStringArray);
+      i:=AnsiIndexStr(varpais.FieldValues['Clave_Variante'].AsString,tvariantes[j].ToStringArray);
       if i>=0 then
       begin
-        if varpais.FieldByName('Clave_Pais').AsString=paisOrigen then
+        if varpais.FieldValues['Clave_Pais'].AsString=paisOrigen then
         begin
-          synOrigen[j].Add(ttext[j][i]);
+          synOrigen[j].add(ttext[i]);
         end
         else
         begin
-          synDestino[j].Add(ttext[j][i]);
+          synDestino[j].add(ttext[i]);
         end;        
         break;
       end;

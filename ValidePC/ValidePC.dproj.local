@@ -2,10 +2,10 @@
 <BorlandProject>
 	<Transactions>
     <Transaction>2015/11/15 05:49:31.000.114,=C:\Users\Francisco\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
-    <Transaction>2015/11/15 05:49:50.000.591,C:\Users\Francisco\Documents\Embarcadero\Studio\Projects\Unit1.pas=C:\Users\Francisco\Documents\Embarcadero\Studio\Projects\ValidePC\Main.pas</Transaction>
-    <Transaction>2015/11/15 05:49:50.000.591,C:\Users\Francisco\Documents\Embarcadero\Studio\Projects\Unit1.dfm=C:\Users\Francisco\Documents\Embarcadero\Studio\Projects\ValidePC\Main.dfm</Transaction>
-    <Transaction>2015/11/15 05:50:06.000.929,C:\Users\Francisco\Documents\Embarcadero\Studio\Projects\Project1.dproj=C:\Users\Francisco\Documents\Embarcadero\Studio\Projects\ValidePC\ValidePC.dproj</Transaction>
+    <Transaction>2015/11/15 05:49:50.000.591,C:\Users\Francisco\Documents\Embarcadero\Studio\Projects\ValidePC\Main.dfm=C:\Users\Francisco\Documents\Embarcadero\Studio\Projects\Unit1.dfm</Transaction>
+    <Transaction>2015/11/15 05:49:50.000.591,C:\Users\Francisco\Documents\Embarcadero\Studio\Projects\ValidePC\Main.pas=C:\Users\Francisco\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2015/11/15 05:50:06.000.929,C:\Users\Francisco\Documents\Embarcadero\Studio\Projects\ValidePC\ValidePC.dproj=C:\Users\Francisco\Documents\Embarcadero\Studio\Projects\Project1.dproj</Transaction>
     <Transaction>2015/11/16 07:33:47.000.249,=C:\Users\Francisco\Documents\Embarcadero\Studio\Projects\ValidePC\Unit1.pas</Transaction>
-    <Transaction>2015/11/16 07:34:17.000.695,C:\Users\Francisco\Documents\Embarcadero\Studio\Projects\ValidePC\Unit1.pas=C:\Users\Francisco\Documents\Embarcadero\Studio\Projects\ValidePC\ValideLogic.pas</Transaction>
+    <Transaction>2015/11/16 07:34:17.000.695,C:\Users\Francisco\Documents\Embarcadero\Studio\Projects\ValidePC\ValideLogic.pas=C:\Users\Francisco\Documents\Embarcadero\Studio\Projects\ValidePC\Unit1.pas</Transaction>
   </Transactions>
 </BorlandProject>
