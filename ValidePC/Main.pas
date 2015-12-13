@@ -59,6 +59,8 @@ type
     Label4: TLabel;
     CheckListBox1: TCheckListBox;
     CheckListBox2: TCheckListBox;
+    Image2: TImage;
+    Image8: TImage;
     procedure FormCreate(Sender: TObject);
     procedure Image6Click(Sender: TObject);
     procedure FileOpenDialog1FileOkClick(Sender: TObject;
@@ -77,6 +79,8 @@ type
     procedure RichEdit1ContextPopup(Sender: TObject; MousePos: TPoint;
       var Handled: Boolean);
     procedure ApplicationEvents1ShortCut(var Msg: TWMKey; var Handled: Boolean);
+    procedure Image2Click(Sender: TObject);
+    procedure Image8Click(Sender: TObject);
 
   private
     { Private declarations }
@@ -199,8 +203,8 @@ begin
      Pais.Active:=true;
      Pais2.Active:=true;
      Color.Active:=true;
-     Form1.DBLookupComboBox2.KeyValue:='México';
-     Form1.DBLookupComboBox3.KeyValue:='Argentina';
+     Form1.DBLookupComboBox2.KeyValue:='Argentina';
+     Form1.DBLookupComboBox3.KeyValue:='México';
      loadDictionary(Form1.Morph);
      loadCollocations(Form1.Catalogos,Form1.Query,Form1.variante,Form1.Morph);
    end;
@@ -253,6 +257,7 @@ begin
     Form1.RichEdit1.OnChange:=nil;
     Form1.RichEdit1.Lines.Append(text);
     Form1.paintLine(i);
+    Form1.LastLine:=i;
     Form1.RichEdit1.Enabled:=true;
     i:=i+1;
   end;
@@ -302,6 +307,11 @@ begin
 end;
 
 
+procedure TForm1.Image2Click(Sender: TObject);
+begin
+  Form1.siguienteMarca;
+end;
+
 procedure TForm1.Image4Click(Sender: TObject);
 begin
   Form1.FileOpenDialog1.Execute;
@@ -320,18 +330,26 @@ begin
   Form1.RichEdit1.OnChange:=Form1.RichEdit1Change;
 end;
 
+procedure TForm1.Image8Click(Sender: TObject);
+begin
+  Form1.marcaAnterior;
+end;
+
 procedure TForm1.RichEdit1Change(Sender: TObject);
 var
   LineNo:Integer;
 begin
   Form1.LastEdit:=Now;
   LineNo:=RichEdit1.Perform(EM_LINEFROMCHAR, RichEdit1.SelStart, 0);
-  if (Form1.LastLine<>LineNo) and (Form1.LastText<>RichEdit1.Lines[Form1.LastLine]) then
+  if Form1.LastLine<>LineNo then
   begin
     paintLine(LastLine);
-  end;
-  if not Timer1.Enabled then
-     Timer1.Enabled:=true;
+    Timer1.Enabled:=false;
+  end
+  else
+    if not Timer1.Enabled then
+       Timer1.Enabled:=true;
+  Form1.LastLine:=LineNo;
   Form1.LastEdit:=Now;
 end;
 
@@ -582,52 +600,61 @@ var
   ban:Boolean;
 
 begin
-  RichEdit1.SetFocus;
-  if RichEdit1.SelLength>0 then
+  if RichEdit1.SelStart=0 then
   begin
-    RichEdit1.SelLength:=0;
-  end;
-  LineNo:=RichEdit1.Perform(EM_LINEFROMCHAR, RichEdit1.SelStart, 0);
-  LinePos:=RichEdit1.Perform(EM_LineIndex,LineNo,0);
-  LinePos:=RichEdit1.SelStart-LinePos;
-  pos:=1;
-  while (pos<PMemory[LineNo].Count) and (StrToInt(PMemory[LineNo][pos])<LinePos) do
-  begin
-    pos:=pos+1;
-  end;
-  pos:=pos-2;
-  if pos<0 then
-  begin
-   LineNo:=LineNo-1;
-   pos:=PMemory[LineNo].Count-1;
-  end;
-
-  ban:=false;
-  while LineNo>=0 do
-  begin
-    while pos>=0 do
-    begin
-      if (StrToInt(LMemory[LineNo][pos])>0) or (StrToInt(LDMemory[LineNo][pos])>0) then
-      begin
-        ban:=true;
-        break;
-      end;
-      pos:=pos-1;
-    end;
-    if ban then
-       break;
-    LineNo:=LineNo-1;
-    if LineNo>=0 then
-      pos:=PMemory[LineNo].Count-1;;
-  end;
-  if ban then
-  begin
-    selectMarca(LineNo,pos);
+     ShowMessage('No se encontró otra palabra marcada');
   end
   else
   begin
-    ShowMessage('No se encontró otra palabra marcada');
+      RichEdit1.SetFocus;
+      if RichEdit1.SelLength>0 then
+      begin
+        RichEdit1.SelLength:=0;
+      end;
+      LineNo:=RichEdit1.Perform(EM_LINEFROMCHAR, RichEdit1.SelStart, 0);
+      LinePos:=RichEdit1.Perform(EM_LineIndex,LineNo,0);
+      LinePos:=RichEdit1.SelStart-LinePos;
+      pos:=1;
+      while (pos<PMemory[LineNo].Count) and (StrToInt(PMemory[LineNo][pos])<LinePos) do
+      begin
+        pos:=pos+1;
+      end;
+      pos:=pos-2;
+      if pos<0 then
+      begin
+       LineNo:=LineNo-1;
+       pos:=PMemory[LineNo].Count-1;
+      end;
+
+      ban:=false;
+      while LineNo>=0 do
+      begin
+        while pos>=0 do
+        begin
+          if (StrToInt(LMemory[LineNo][pos])>0) or (StrToInt(LDMemory[LineNo][pos])>0) then
+          begin
+            ban:=true;
+            break;
+          end;
+          pos:=pos-1;
+        end;
+        if ban then
+           break;
+        LineNo:=LineNo-1;
+        if LineNo>=0 then
+          pos:=PMemory[LineNo].Count-1;;
+      end;
+      if ban then
+      begin
+        selectMarca(LineNo,pos);
+      end
+      else
+      begin
+        ShowMessage('No se encontró otra palabra marcada');
+      end;
   end;
+
+
 end;
 
 procedure TForm1.subraya(uso:String);
@@ -685,7 +712,10 @@ begin
        end
        else
        begin
-         bUnderlineType:= CFU_UNDERLINENONE or AColor;
+         if uso<>'N/A' then
+           bUnderlineType:= CFU_UNDERLINENONE or AColor
+         else
+           bUnderlineType:= CFU_UNDERLINEWAVE or AColor;
        end;
        Form1.RichEdit1.Perform(EM_SETCHARFORMAT, SCF_SELECTION, Longint(@Format));
     end;
@@ -711,6 +741,7 @@ begin
   for i := 0 to RichEdit1.Lines.Count-1 do
   begin
     Form1.paintLine(i);
+    Form1.LastLine:=i;
   end;
   Form1.RichEdit1.SelStart:=0;
   Timer1.Enabled:=true;
@@ -728,14 +759,17 @@ var
       Form1.RichEdit1.OnChange:=nil;
       if line>=VMemory.Count then
       begin
-        VMemory.Add(TObjectList<TStrings>.Create());
-        UMemory.Add(TObjectList<TStrings>.Create());
-        LMemory.Add(TStringList.Create);
-        PMemory.Add(TStringList.Create);
-        TMemory.Add(TStringList.Create);
-        VDMemory.Add(TObjectList<TStrings>.Create());
-        UDMemory.Add(TObjectList<TStrings>.Create());
-        LDMemory.Add(TStringList.Create);
+        while line>=VMemory.Count do
+        begin
+          VMemory.Add(TObjectList<TStrings>.Create());
+          UMemory.Add(TObjectList<TStrings>.Create());
+          LMemory.Add(TStringList.Create);
+          PMemory.Add(TStringList.Create);
+          TMemory.Add(TStringList.Create);
+          VDMemory.Add(TObjectList<TStrings>.Create());
+          UDMemory.Add(TObjectList<TStrings>.Create());
+          LDMemory.Add(TStringList.Create);
+        end;
       end
       else
       begin
@@ -784,7 +818,6 @@ var
       RichEdit1.SelStart:=old;
       RichEdit1.SelAttributes.Color:=clBlack;
       subraya('normal');
-      Form1.LastLine:=line;
       Form1.LastText:=RichEdit1.Lines[line];
       Form1.RichEdit1.OnChange:=Form1.RichEdit1Change;
 
@@ -801,7 +834,10 @@ begin
       subraya(uso);
   end
   else
-    RichEdit1.SelAttributes.Style:=[fsBold];
+    if tipo then
+      RichEdit1.SelAttributes.Style:=[fsBold]
+    else
+      subraya(uso);
 end;
 
 procedure TForm1.paintVariante(line:Integer;variantes:TObjectList<TStrings>;list:TStrings;pos:TStrings;tipo:Boolean;Clength:TStrings);
