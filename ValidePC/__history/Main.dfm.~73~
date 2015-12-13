@@ -4764,8 +4764,8 @@ object Form1: TForm1
       Height = 46
       ItemHeight = 13
       Items.Strings = (
-        'Coloquial'
-        'Coloquial restringido'
+        'Col'#243'quial'
+        'Col'#243'quial restringido'
         'Formal')
       TabOrder = 3
     end

@@ -861,7 +861,7 @@ begin
         begin
             pinta(usos[0],tipo);
         end;
-      end
+      end;
       else
       begin
         pinta('N/A',tipo);

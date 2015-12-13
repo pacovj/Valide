@@ -91,8 +91,6 @@ type
     PMemory:TObjectList<TStrings>;//Posiciones
     TMemory:TObjectList<TStrings>;//Longitudes de token
     VDMemory:TObjectList<TObject>;//Variantes destino
-    UMemory:TObjectList<TObject>;//Variantes destino
-    UDMemory:TObjectList<TObject>;//Variantes destino
     LDMemory:TObjectList<TStrings>;//Longitudes variantes destino
     procedure subraya(uso:String);
     procedure refresh;
@@ -103,7 +101,6 @@ type
     procedure marcaAnterior();
     procedure selectMarca(LineNo:Integer;pos:Integer);
     procedure translate(Sender: TObject);
-    procedure filtraUsos(usos:TStrings);
   end;
 
 var
@@ -112,35 +109,6 @@ var
 implementation
 
 {$R *.dfm}
-
-procedure TForm1.filtraUsos(usos:TStrings);
-var
-  i:Integer;
-  j:Integer;
-begin
-  for j := 0 to Form1.CheckListBox1.Items.Count-1 do
-    begin
-      if (not Form1.CheckListBox1.Checked[j]) and (usos.Count>0) then
-      begin
-        Color.First;
-        Color.Locate('Uso',AnsiLowerCase(Form1.CheckListBox1.Items[j]),[]);
-        i:=AnsiIndexStr(Color.FieldByName('Clave_Uso').AsString,usos.ToStringArray);
-        if i>=0 then
-          usos.Delete(i);
-      end;
-    end;
-  for j := 0 to Form1.CheckListBox2.Items.Count-1 do
-    begin
-      if (not Form1.CheckListBox2.Checked[j]) and (usos.Count>0) then
-      begin
-        Color.First;
-        Color.Locate('Uso',AnsiLowerCase(Form1.CheckListBox2.Items[j]),[]);
-        i:=AnsiIndexStr(Color.FieldByName('Clave_Uso').AsString,usos.ToStringArray);
-        if i>=0 then
-          usos.Delete(i);
-      end;
-    end;
-end;
 
 procedure TForm1.translate(Sender: TObject);
 var
@@ -280,8 +248,8 @@ begin
   begin
     Form1.CheckListBox2.Checked[i]:=true;
   end;
-  Form1.CheckListBox1.OnClickCheck:=DBLookupComboBox2Click;
-  Form1.CheckListBox2.OnClickCheck:=DBLookupComboBox2Click;
+  Form1.CheckListBox1.OnClick:=DBLookupComboBox2Click;
+  Form1.CheckListBox2.OnClick:=DBLookupComboBox2Click;
   Form1.ValideBase.Connected:=false;
   Form1.ValideBase.Params.DriverID:='SQLite';
   Form1.ValideBase.Params.Database:='$(RUN)/dbs/valide';
@@ -292,12 +260,10 @@ begin
   Form1.LastEdit:=Now;
   Form1.LastLine:=RichEdit1.Perform(EM_LINEFROMCHAR, RichEdit1.SelStart, 0);
   VMemory:=TObjectList<TObject>.Create();
-  UMemory:=TObjectList<TObject>.Create();
   LMemory:=TObjectList<TStrings>.Create();
   TMemory:=TObjectList<TStrings>.Create();
   PMemory:=TObjectList<TStrings>.Create();
   VDMemory:=TObjectList<TObject>.Create();
-  UDMemory:=TObjectList<TObject>.Create();
   LDMemory:=TObjectList<TStrings>.Create();
 end;
 
@@ -729,23 +695,19 @@ var
       if line>=VMemory.Count then
       begin
         VMemory.Add(TObjectList<TStrings>.Create());
-        UMemory.Add(TObjectList<TStrings>.Create());
         LMemory.Add(TStringList.Create);
         PMemory.Add(TStringList.Create);
         TMemory.Add(TStringList.Create);
         VDMemory.Add(TObjectList<TStrings>.Create());
-        UDMemory.Add(TObjectList<TStrings>.Create());
         LDMemory.Add(TStringList.Create);
       end
       else
       begin
         (VMemory[line] as TObjectList<TStrings>).Clear;
-        (UMemory[line] as TObjectList<TStrings>).Clear;
         LMemory[line].Clear;
         PMemory[line].Clear;
         TMemory[line].Clear;
         (VDMemory[line] as TObjectList<TStrings>).Clear;
-        (UDMemory[line] as TObjectList<TStrings>).Clear;
         LDMemory[line].Clear;
       end;
       lemmas:=TStringList.Create;
@@ -757,9 +719,7 @@ var
       for i := 0 to list.Count-1 do
       begin
          (VMemory[line] as TObjectList<TStrings>).Add(TStringList.Create());
-         (UMemory[line] as TObjectList<TStrings>).Add(TStringList.Create());
          (VDMemory[line] as TObjectList<TStrings>).Add(TStringList.Create());
-         (UDMemory[line] as TObjectList<TStrings>).Add(TStringList.Create());
          TMemory[line].Add(IntToStr(Length(list[i])));
       end;
 
@@ -793,15 +753,17 @@ end;
 
 procedure TForm1.pinta(uso:String;tipo:Boolean);
 begin
-  if Form1.Color.Locate('Clave_Uso',uso,[]) then
+  if tipo then
   begin
-    if tipo then
+    if Form1.Color.Locate('Clave_Uso',uso,[]) then
       RichEdit1.SelAttributes.Color:=StringToColor(Form1.Color.FieldByName('Clave_Color').AsString)
     else
-      subraya(uso);
+      RichEdit1.SelAttributes.Color:=clGrayText;
   end
   else
-    RichEdit1.SelAttributes.Style:=[fsBold];
+  begin
+    subraya(uso);
+  end;
 end;
 
 procedure TForm1.paintVariante(line:Integer;variantes:TObjectList<TStrings>;list:TStrings;pos:TStrings;tipo:Boolean;Clength:TStrings);
@@ -834,7 +796,6 @@ begin
       usos.clear;
       getUsos(variantes[i],Pais.FieldByName('Clave_Pais').AsString,Form1.varpaises,usos);
       i:=i+StrToInt(Clength[i]);
-      filtraUsos(usos);
       if usos.Count>0 then
       begin
         if usos.Count>1 then

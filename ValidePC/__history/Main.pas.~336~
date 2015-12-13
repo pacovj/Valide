@@ -120,24 +120,11 @@ var
 begin
   for j := 0 to Form1.CheckListBox1.Items.Count-1 do
     begin
-      if (not Form1.CheckListBox1.Checked[j]) and (usos.Count>0) then
+      if not Form1.CheckListBox1.Checked[j] then
       begin
         Color.First;
         Color.Locate('Uso',AnsiLowerCase(Form1.CheckListBox1.Items[j]),[]);
-        i:=AnsiIndexStr(Color.FieldByName('Clave_Uso').AsString,usos.ToStringArray);
-        if i>=0 then
-          usos.Delete(i);
-      end;
-    end;
-  for j := 0 to Form1.CheckListBox2.Items.Count-1 do
-    begin
-      if (not Form1.CheckListBox2.Checked[j]) and (usos.Count>0) then
-      begin
-        Color.First;
-        Color.Locate('Uso',AnsiLowerCase(Form1.CheckListBox2.Items[j]),[]);
-        i:=AnsiIndexStr(Color.FieldByName('Clave_Uso').AsString,usos.ToStringArray);
-        if i>=0 then
-          usos.Delete(i);
+        i:=AnsiIndexStr(Color.FieldByName('Clave_Uso').AsString,usos);
       end;
     end;
 end;
@@ -793,15 +780,17 @@ end;
 
 procedure TForm1.pinta(uso:String;tipo:Boolean);
 begin
-  if Form1.Color.Locate('Clave_Uso',uso,[]) then
+  if tipo then
   begin
-    if tipo then
+    if Form1.Color.Locate('Clave_Uso',uso,[]) then
       RichEdit1.SelAttributes.Color:=StringToColor(Form1.Color.FieldByName('Clave_Color').AsString)
     else
-      subraya(uso);
+      RichEdit1.SelAttributes.Color:=clGrayText;
   end
   else
-    RichEdit1.SelAttributes.Style:=[fsBold];
+  begin
+    subraya(uso);
+  end;
 end;
 
 procedure TForm1.paintVariante(line:Integer;variantes:TObjectList<TStrings>;list:TStrings;pos:TStrings;tipo:Boolean;Clength:TStrings);
