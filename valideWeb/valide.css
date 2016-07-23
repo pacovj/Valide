@@ -1,0 +1,143 @@
+.top{
+	height:20px;
+	width:100%;
+	background-color:#000000;
+}
+
+.bot{
+	position:fixed;
+	bottom:0px;
+	height:20px;
+	width:100%;
+	background-color:#000000;
+}
+
+.invisible{
+	display:none;
+}
+.layout{
+	margin-top:20px;
+	margin-bottom:10px;
+	margin-left:25px;
+	margin-right:25px;
+	display:block;
+}
+
+.logo
+{
+	height:40px;
+	margin-left:10px;
+	margin-right:10px;
+}
+
+.logos
+{
+	position:fixed;
+	bottom:30px;
+	right:25px;
+}
+
+
+.tab{
+	display:inline;
+	border-left: 1px solid #aaaaaa;
+	border-top: 1px solid #aaaaaa;
+	border-right: 1px solid #aaaaaa;
+	border-bottom: 1px solid #aaaaaa;
+	font-size:14px;
+	padding-top:5px;
+	padding-bottom:5px;
+	padding-left:15px;
+	padding-right:15px;
+	border-radius:3px;
+	cursor:pointer;
+}
+.tab:hover{
+	background-color:#000033;
+	color:#ffffff;
+}
+.selTab{
+	display:inline;
+	border-left: 2px solid #0C536B;
+	border-top: 2px solid #0C536B;
+	border-right: 2px solid #0C536B;
+	font-size:16px;
+	padding-top:5px;
+	padding-bottom:5px;
+	padding-left:15px;
+	padding-right:15px;
+	border-radius:3px;
+	font-weight:bold;
+	cursor:pointer;
+	text-decoration: underline;
+	background-color:#000033;
+	color:#ffffff;
+}
+
+.contenido
+{
+	margin-top:4px;
+	padding-left:10px;
+	padding-right:15px;
+	padding-bottom:10px;
+	padding-top:0px;
+	border: 2px solid #0C536B;
+	box-shadow: 8px 8px 5px grey;
+	height:400px;
+	overflow-y: auto;
+}
+
+.titulo
+{
+	font-size:22px;
+	font-weight:bold;
+	margin-bottom:30px;
+	font-family:"Palatino Linotype", "Book Antiqua", Palatino, serif;
+	text-decoration:underline;
+}
+
+.mainIcon
+{
+	height:35px;
+	margin-right:10px;
+}
+
+.checkGroup
+{
+	width:45%;
+	display:inline;
+	margin-top:15px;
+	padding-right:10px;
+	padding-left:17px;
+	font-size:14px;
+	line-height:150%;
+}
+
+.etiqueta
+{
+	font-size:14px;
+	font-weight:bold;
+	margin-bottom:6px;
+	margin-left:-12px;
+}
+
+.col2
+{
+	width:50%;
+}
+
+.left{
+	float:left;
+}
+
+.right
+{
+	float:right;
+}
+
+.espera
+{
+	position:absolute;
+	top: 40%;
+	left: 45%;
+}

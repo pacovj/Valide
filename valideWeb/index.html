@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>Valide</title>
+		<link href="valide.css" rel="stylesheet">
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+		
+		<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    
+		<script src="valide.js"></script>
+		<script src="editor/scripts/widgEditor.js"></script>
+		<style type="text/css" media="all">
+			@import "editor/css/info.css";
+			@import "editor/css/main.css";
+			@import "editor/css/widgEditor.css";
+		</style>
+
+		<script>
+			$(document).ready(function() {
+				init();
+			});
+		</script>
+		
+  </head>
+  <body>
+	<div class='top'>
+	</div>
+	<div class='layout'>
+		<div class='titulo'><img src='icon.jpg' class='mainIcon'/>VALIDE: Análisis de variaciones léxicas del Español</div>
+		<div class='tabBar'>
+			<div class='selTab' onclick='clickTab("edita",this)'>Edita tu texto</div>
+			<div class='tab' onclick='clickTab("configura",this)'>Configura el análisis</div>
+			<div class='tab' onclick='clickTab("analiza",this)'>Analiza tu texto</div>
+			<div class='tab' onclick='clickTab("visualiza",this)'>Visualiza estadísticas</div>
+			<div class='tab' onclick='clickTab("conceptos",this)'>Añade conceptos al diccionario</div>
+			<div class='tab' onclick='clickTab("conjugaciones",this)'>Añade conjugaciones al diccionario</div>
+		</div>
+		<div class='contenido' id='edita'>
+			<form id="form">
+				<textarea id="texto" name="texto" class="widgEditor nothing" placeholder="Escribe o pega tu texto aquí"></textarea>
+			</form>
+		</div>
+		<div class='contenido invisible' id='configura'>
+			<div id='checkPaises' class='checkGroup left'>
+			</div>
+			<div id='checkUsos' class='checkGroup right'>
+			</div>
+		</div>
+		<div class='contenido invisible' id='analiza'>
+		</div>
+		<div class='contenido invisible' id='visualiza'>
+		</div>
+		<div class='contenido invisible' id='conceptos'>
+		</div>
+		<div class='contenido invisible' id='conjugaciones'>
+		</div>
+	</div>
+	<div class='logos'>
+		<img src='logoCIC.jpg' class='logo'/>
+		<img src='logoColMex.jpg' class='logo'/>
+	</div>
+	<div class='bot'>
+	</div>
+  </body>
+</html>
