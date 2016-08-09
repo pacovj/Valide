@@ -10,6 +10,11 @@ import json
 import time
 import xml.etree.ElementTree as ET
 
+articulos={"ms":["un","el","ese","este","aquel","algún","ningún"],
+	"mp":["unos","los","esos","estos","aquellos","algunos","ningunos"],
+	"fs":["una","la","esa","esta","aquella","alguna","ninguna"],
+	"fp":["unas","las","esas","estas","aquellas","algunas","ningunas"]};
+
 keepWorking=True
 conn = sqlite3.connect('valide.db3')
 timeout=None
@@ -48,6 +53,8 @@ class myRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 			dumpTable("Usos",self)
 		if self.path=="/analiza":
 			analiza(self)
+		if self.path=="/cambia":
+			cambia(self)
 
 def isHit(colocacion,ngram):
 	toks=colocacion.split(" ")
@@ -57,6 +64,39 @@ def isHit(colocacion,ngram):
 		if not toks[i] in ngram[i]:
 			return False
 	return True
+
+def wordMe(paragraph):
+	words=[]
+	word=''
+	for c in paragraph:
+		if isWhiteSpace(c):
+			if word!='':
+				words.append(word)
+			word=''
+		elif isSeparator(c):
+			if word!='':
+				words.append(word)
+			word=''
+		else:
+			word+=c
+	if word!='':
+		words.append(word)
+	return words
+
+def cambia(request):
+	vars=request.getVars()
+	texto=""
+	parrafo=vars['text'][0]
+	sinonimo=vars["sinonimo"][0]
+	sgenero=vars["singen"][0]
+	spos=vars["sinpos"][0]
+	original=vars["original"][0]
+	ppi=vars["ppi"][0]
+	words=wordMe(parrafo)
+	owords=wordMe(original)
+	#reemplazar el original por sinonimo
+	
+	request.wfile.write(clean(texto))
 
 def analiza(request):
 	vars=request.getVars()
@@ -68,8 +108,7 @@ def analiza(request):
 	hits=lexMe(morphs,paragraphs)
 	hits=pruneHits(hits,vars['Paises'][0],vars['Usos'][0])
 	hits=extractConceptos(hits)
-	print hits
-	request.wfile.write(clean(json.dumps(hits)))
+	request.wfile.write(clean(json.dumps({"hits":hits,"parrafos":paragraphs})))
 
 def getIndexArray(nombres,tabla):
 	v=[]
@@ -88,7 +127,12 @@ def extractConceptos(hits):
 		usosTotales=[]
 		paisesTotales=[]
 		conceptosTotales=[]
+		#Necesito los sinonimos aqui
+		sinonimos=[]
+		
 		for variante in hit["variantes"]:
+			rows=c.execute("select * from variantes where concepto='"+variante[2]+"' and pais='"+variante[1]+"';").fetchall()
+			sinonimos.extend(rows);
 			if not variante[3] in usosTotales:
 				usosTotales.append(variante[3])
 			if not variante[1] in paisesTotales:
@@ -118,10 +162,10 @@ def extractConceptos(hits):
 			detalle["conceptos"]=conceptos
 			detalles.append(detalle)
 		hit["usos"]=getIndexArray(usosTotales,"Usos")
-		hit["pais"]=getIndexArray(paisesTotales,"Paises")
+		hit["paises"]=getIndexArray(paisesTotales,"Paises")
 		hit["detalles"]=detalles
 		hit["conceptos"]=conceptosTotales
-		del hit["variantes"]
+		hit["sinonimos"]=sinonimos
 	#Los resultados se mostraran hit usos boton de expandir
 	#Cada hit vendra por pais concepto uso dispersion y otros datos y un boton de reemplazar con sinonimo
 	return hits
@@ -199,12 +243,19 @@ def getConditionString(field,bases):
 		w+=1
 	return t
 
+def getText(node):
+	t=cleanMe(node.text)
+	for child in node:
+		t+=getTags(child)
+	t+=cleanMe(node.tail)
+	return t
+
 def paragraphMe(html):
 	paragraphs=[]
+	print html
 	root = ET.fromstring(html)
 	for child in root:
 		paragraphs.append(getText(child))
-	chunks=chunkMe(paragraphs)
 	return paragraphs
 
 def isWhiteSpace(c):
@@ -291,12 +342,6 @@ def cleanMe(texto):
 	else:
 		return ''
 
-def getText(node):
-	t=cleanMe(node.text)
-	for child in node:
-		t+=getText(child)
-	t+=cleanMe(node.tail)
-	return t
 
 def clean(string):
 	haveUnicode=0

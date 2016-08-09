@@ -19,13 +19,6 @@
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     
 		<script src="valide.js"></script>
-		<script src="editor/scripts/widgEditor.js"></script>
-		<style type="text/css" media="all">
-			@import "editor/css/info.css";
-			@import "editor/css/main.css";
-			@import "editor/css/widgEditor.css";
-		</style>
-
 		<script>
 			$(document).ready(function() {
 				init();
@@ -35,6 +28,13 @@
   </head>
   <body>
 	<div class='top'>
+	</div>
+	<div id="dialog" class="modal invisible">
+		<div class="modal-content">
+			<div class="modal-header"><div class="modal-title">Información</div><div class="close" onclick='dismiss("#dialog")'>&#x24E7;</div></div>
+			<div id="dialogBody"><div class="frameBox" id='picBox'></div><div class='textBox' id='bBox'>Hola</div></div>
+			<div id="sinonimos"></div>
+		</div>
 	</div>
 	<div class='layout'>
 		<div class='titulo'><img src='icon.jpg' class='mainIcon'/>VALIDE: Análisis de variaciones léxicas del Español</div>
@@ -47,9 +47,7 @@
 			<div class='tab' onclick='clickTab("conjugaciones",this)'>Añade conjugaciones al diccionario</div>
 		</div>
 		<div class='contenido' id='edita'>
-			<form id="form">
-				<textarea id="texto" name="texto" class="widgEditor nothing" placeholder="Escribe o pega tu texto aquí"></textarea>
-			</form>
+			<textarea id="texto" name="texto" placeholder="Escribe o pega tu texto aquí"></textarea>
 		</div>
 		<div class='contenido invisible' id='configura'>
 			<div id='checkPaises' class='checkGroup left'>

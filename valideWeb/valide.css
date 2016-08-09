@@ -94,12 +94,14 @@
 	margin-bottom:30px;
 	font-family:"Palatino Linotype", "Book Antiqua", Palatino, serif;
 	text-decoration:underline;
+	vertical-align:middle;
 }
 
 .mainIcon
 {
-	height:35px;
+	height:30px;
 	margin-right:10px;
+	vertical-align:middle;
 }
 
 .checkGroup
@@ -140,4 +142,232 @@
 	position:absolute;
 	top: 40%;
 	left: 45%;
+}
+
+
+.hit
+{
+	margin-top:10px;
+	margin-bottom:10px;
+	width:98%;
+	padding:10px;
+	border: 2px solid #0C536B;
+	box-shadow: 4px 4px 3px grey;
+}
+
+.hit:hover{
+	border: 3px solid #000066;
+	color:blue;
+}
+.hitHeader
+{
+	margin-bottom:5px;
+	width:100%;
+	display:table;
+}
+
+.hitHeaderContent
+{
+	font-size:14px;
+	font-weight:bold;
+	text-align:middle;
+	vertical-align:middle;
+	padding-left:5px;
+	padding-right:5px;
+	display:table-cell;
+}
+
+.miniPic
+{
+	height:32px;
+	margin-right:5px;
+	margin-left:5px;
+	cursor:pointer;
+}
+
+.mediumPic
+{
+	height:32px;
+	margin-right:5px;
+	margin-left:5px;
+	display:inline;
+	cursor:pointer;
+}
+.miniBox
+{
+	height:32px;
+	width:32px;
+	display:inline;
+	cursor:pointer;
+}
+
+.hitGroup
+{
+	display:inline;
+	padding:5px;
+	margin-right:20px;
+}
+
+.modal {
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.8); /* Black w/ opacity */
+}
+
+.modal-title
+{
+	font-size:18px;
+	float:left;
+	vertical-align:top;
+	margin-top:-14px;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 10% auto; /* 15% from the top and centered */
+    border: 2px solid #888;
+    width: 40%;
+		padding:20px;/* Could be more or less, depending on screen size */
+}
+.modal-header {
+		border-bottom: 1px solid black;
+		padding-bottom:10px;
+		padding-top:10px;
+		width:100%;
+}
+
+#dialogBody{
+	padding-top:10px;
+	padding-bottom:10px;
+}
+
+/* The Close Button */
+.close {
+  color: #000;
+  font-size: 22px;
+	float:right;
+	margin-top:-20px;
+	vertical-align:top;
+}
+
+.close:hover,
+.close:focus {
+		font-weight: bold;
+    cursor: pointer;
+}
+
+.frameBox
+{
+	display:table-cell;
+	padding:10px;
+	text-align:center;
+	vertical-align:middle;
+	border: 1px dotted black;
+}
+
+.textBox
+{
+	text-align:left;
+	display:table-cell;
+	vertical-align:top;
+	padding-left:15px;
+}
+
+.textBox div
+{
+	margin-bottom:10px;
+}
+.milabel
+{
+	font-weight:bold;
+}
+
+#texto
+{
+	display:block;
+	margin:auto;
+	margin-top:10px;
+	width:95%;
+	height:95%;
+}
+.sinonimo
+{
+	display:table-row;
+	text-align:center;	
+}
+.sintext
+{
+	display:table-cell;
+	vertical-align:middle;
+	width:35%;
+	text-align:left;
+	padding-left:15px;
+	padding-right:15px;
+	padding-top:5px;
+	border-bottom:1px solid gray;
+}
+
+.sinuso
+{
+	display:table-cell;
+	vertical-align:middle;
+	width:5%;
+	text-align:center;
+	cursor:default;
+	padding-top:5px;
+	border-bottom:1px solid gray;
+}
+.sinchange
+{
+	display:table-cell;
+	vertical-align:middle;
+	width:5%;
+	text-align:center;
+	cursor:pointer;
+	padding-top:5px;
+	border-bottom:1px solid gray;
+}
+
+.singenero
+{
+	display:table-cell;
+	vertical-align:middle;
+	text-align:center;
+	width:20%;
+	cursor:default;
+	padding-top:5px;
+	border-bottom:1px solid gray;
+}
+.sinpos
+{
+	display:table-cell;
+	vertical-align:middle;
+	text-align:center;
+	width:20%;
+	cursor:default;
+	padding-top:5px;
+	border-bottom:1px solid gray;
+}
+
+.sindispersion
+{
+	display:table-cell;
+	vertical-align:middle;
+	text-align:center;
+	width:10%;
+	cursor:default;
+	padding-top:5px;
+	border-bottom:1px solid gray;
+}
+
+#sinonimos
+{
+	width:100%;
+	border: 1px dotted black;
 }
