@@ -67,6 +67,7 @@ def isHit(colocacion,ngram):
 
 def wordMe(paragraph):
 	words=[]
+	separators=[]
 	word=''
 	for c in paragraph:
 		if isWhiteSpace(c):
@@ -76,12 +77,70 @@ def wordMe(paragraph):
 		elif isSeparator(c):
 			if word!='':
 				words.append(word)
+			separators.append([c,len(words)])
 			word=''
 		else:
 			word+=c
 	if word!='':
 		words.append(word)
-	return words
+	return (words,separators)
+
+def getTextoTag(parrafos,hits):
+	pidx=0
+	texto=""
+	ps=parrafos[:]
+	hs=hits[:]
+	hidx=0
+	while len(hs)>0:
+		while pidx<hs[0]["pidx"]:
+			texto+="<p>"+ps[0]+"</p>"
+			pidx+=1
+			del ps[0]
+		cparrafo=ps[0]
+		del ps[0]
+		(words,separators)=wordMe(cparrafo)
+		cparrafo="<p>"
+		needSpace=False
+		ppi=hs[0]["ppi"]
+		longitud=len(wordMe(hs[0]["texto"])[0])
+		print words
+		print separators
+		print ppi
+		print longitud
+		closeSpan=False
+		for i in range(0,len(words)):
+			if i==ppi+longitud:
+				cparrafo+="</span>"
+				del hs[0]
+				hidx+=1
+				closeSpan=False
+				if len(hs)>0:
+					ppi=hs[0]["ppi"]
+			if i==ppi:
+				if needSpace:
+					cparrafo+=" "
+				cparrafo+="<span class='thit' id='texto_"+str(hidx)+"'>"
+				closeSpan=True
+			needSpace=True
+			while len(separators)>0 and separators[0][1]==i:
+				cparrafo+=separators[0][0]
+				del separators[0]
+			if needSpace and i!=ppi:
+				cparrafo+=" "
+			cparrafo+=words[i]
+		if closeSpan:
+			cparrafo+="</span>"
+			del hs[0]
+			hidx+=1
+		while len(separators)>0:
+			cparrafo+=separators[0][0]
+			del separators[0]
+		cparrafo+="</p>"
+		print cparrafo
+	texto+=cparrafo
+	for p in ps:
+		texto+="<p>"+p+"</p>"
+	return texto
 
 def cambia(request):
 	vars=request.getVars()
@@ -91,12 +150,94 @@ def cambia(request):
 	sgenero=vars["singen"][0]
 	spos=vars["sinpos"][0]
 	original=vars["original"][0]
-	ppi=vars["ppi"][0]
-	words=wordMe(parrafo)
-	owords=wordMe(original)
+	ppi=int(vars["ppi"][0])
+	(words,separators)=wordMe(parrafo)
+	(owords,oseparators)=wordMe(original)
+	#Buscar el articulo
+	genero=""
+	numero=""
+	articulo=-1
+	ppia=-1
+	isTitle=False;
+	longitud=len(owords);
+	for i in range(1,3):
+		if (ppi-i>=0) and words[ppi-i].lower() in articulos['ms']:
+			isTitle=words[ppi-i].lower()!=words[ppi-i]
+			genero="masculino"
+			numero="s"
+			ppia=ppi-i
+			articulo=articulos['ms'].index(words[ppi-i].lower())
+			break
+		if (ppi-i>=0) and words[ppi-i].lower() in articulos['mp']:
+			isTitle=words[ppi-i].lower()!=words[ppi-i]
+			genero="masculino"
+			numero="p"
+			ppia=ppi-i
+			articulo=articulos['mp'].index(words[ppi-i].lower())
+			break
+		if (ppi-i>=0) and words[ppi-i] in articulos['fs']:
+			isTitle=words[ppi-i].lower()!=words[ppi-i]
+			genero="femenino"
+			numero="s"
+			ppia=ppi-i
+			articulo=articulos['fs'].index(words[ppi-i].lower())
+			break
+		if (ppi-i>=0) and words[ppi-i] in articulos['fp']:
+			isTitle=words[ppi-i].lower()!=words[ppi-i]
+			genero="femenino"
+			numero="plural"
+			ppia=ppi-i
+			articulo=articulos['fp'].index(words[ppi-i].lower())
+			break
+	print articulo
+	print isTitle
+	print genero
+	print numero
+	print words
+	print separators
 	#reemplazar el original por sinonimo
-	
-	request.wfile.write(clean(texto))
+	texto=''
+	replace=True
+	#Obtener la conjugacion del original
+	obases=getCompleteBases(original)
+	x=0
+	while x!=len(obases):
+		if obases[x][2][0]=='N' and spos=='sustantivo' or obases[x][2][0]=='V' and spos=='verbo':
+			x+=1
+		else:
+			del obases[x]
+	print obases
+	conjugado= obases[0][0]!=original
+	print conjugado
+	print ppi
+	for i in range(0,len(words)):
+		while len(separators)>0 and separators[0][1]==i:
+			texto+=separators[0][0]
+			del separators[0]
+		if i==ppia and conjugado and articulo>-1:
+			texto+=articulos[obases[0][2][3].lower()+obases[0][2][4].lower()][articulo]
+		else:
+			if i>=ppi and i<ppi+longitud:
+				if replace:
+					tt=sinonimo
+					if len(obases)>0:
+						s=getNewBases(sinonimo,obases[0])
+						if s!="":
+							tt=s
+					if texto!="":
+						texto+=" "
+					texto+=tt
+					replace=False
+			else:
+				if texto!="":
+					texto+=" "
+				texto+=words[i]
+	while len(separators)>0:
+		texto+=separators[0][0]
+		del separators[0]
+	print texto
+	print clean(texto)
+	request.wfile.write(json.dumps({"texto":clean(texto)}))
 
 def analiza(request):
 	vars=request.getVars()
@@ -108,7 +249,7 @@ def analiza(request):
 	hits=lexMe(morphs,paragraphs)
 	hits=pruneHits(hits,vars['Paises'][0],vars['Usos'][0])
 	hits=extractConceptos(hits)
-	request.wfile.write(clean(json.dumps({"hits":hits,"parrafos":paragraphs})))
+	request.wfile.write(clean(json.dumps({"hits":hits,"parrafos":paragraphs,"tag":getTextoTag(paragraphs,hits)})))
 
 def getIndexArray(nombres,tabla):
 	v=[]
@@ -273,6 +414,19 @@ def getBases(word):
 		if not r[0] in bases:
 			bases.append(r[0])
 	return bases
+
+def getNewBases(sinonimo,base):
+	c = conn.cursor()
+	rows=c.execute("select * from morph where tag='"+base[2]+"' and baseForm='"+sinonimo+"';").fetchall()
+	if len(rows)>0:
+		return rows[0][0]
+	else:
+		return ""
+
+def getCompleteBases(word):
+	c = conn.cursor()
+	rows=c.execute("select * from morph where morph='"+word.lower()+"';").fetchall()
+	return rows
 
 def morphMe(chunks):
 	o=[]

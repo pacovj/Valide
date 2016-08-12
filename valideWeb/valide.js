@@ -3,6 +3,7 @@ var limite=15;
 var usos=[]
 var selPaises;
 var selUsos;
+var currentView="hit_";
 
 function toTitleCase(str)
 {
@@ -304,14 +305,14 @@ function showSinonimos(paisix,conceptoix,hitix)
 function cambiar(sinidx,hidx)
 {
 	var hit=currentHits[hidx];
-	var sinonimo=hit[sinonimos][sinidx];
+	var sinonimo=hit["sinonimos"][sinidx];
 	var original=hit["texto"];
-	askSomething("cambia",{"text":$("#parrafo").val(),"sinonimo":sinonimo[0],"sinpos":sinonimo[5],"singen":sinonimo[4],"original":original,"ppi":hit["ppi"]},cambiame,{});
+	askSomething("cambia",{"text":$("#parrafo").val(),"sinonimo":sinonimo[0],"sinpos":sinonimo[5],"singen":sinonimo[4],"original":original,"ppi":hit["ppi"]},cambia,{});
 }
 
-function cambiame(data)
+function cambia(data)
 {
-	$("#parrafo").val(data);
+	$("#parrafo").val(data["texto"]);
 }
 
 var oldP;
@@ -367,10 +368,214 @@ function showConcepto(hidx,cidx)
 var currentHits;
 var currentParagraphs;
 
+function getHits(hits)
+{
+	var h='';
+	var hidx=0;
+	for (hit of hits)
+	{
+		h+='<div class="hit" id="hit_'+String(hidx)+'">';
+		h+='<div class="hitHeader">';
+		h+='<div class="hitHeaderContent" style="width:15%">';
+		h+=hit["texto"];
+		h+='</div>';
+		h+='<div class="hitHeaderContent" style="width:25%">';
+		h+=getMatch(hit,hidx);
+		h+='</div>';
+		h+='<div class="hitHeaderContent" style="width:60%">';//Paises 
+		var clusters=getClusters(hit["variantes"]);
+		for (cluster of clusters)
+		{
+			c=0;
+			h+="<div class='hitGroup'>";
+			for (variante of cluster)
+			{
+				if(c==0)
+				{
+					var cidx=0;
+					for (concepto of hit["conceptos"])
+					{
+						if(variante[2]==concepto[0])
+						{
+							h+="<img src='"+concepto[3]+"' ";
+							h+="title='"+concepto[0]+"' class='mediumPic' onclick='showConcepto("+String(hidx)+","+String(cidx)+")'/>";
+							break;
+						}
+						cidx++;
+					}
+					var uso=getUso(variante[3])
+					h+="<svg class='miniBox'>";
+					h+="<rect width='32' height='32' style='fill:"+usos[uso][1]+";' onclick='showUso(\""+variante[3]+"\")'>";
+					h+="<title>"+usos[uso][0]+"</title>";
+					h+="</title>";
+					h+="</svg>";
+				}
+				
+				c++;
+				var pic=getPais(variante[1])
+				h+="<img src='flags/"+paises[pic][2]+"' ";
+				h+="title='"+paises[pic][0]+"' class='miniPic' onclick='showSinonimos("+String(pic)+","+String(cidx)+","+String(hidx)+")'/>";
+			}
+			h+="</div>";
+		}
+		h+='</div>';
+
+
+		h+='</div>';
+		h+='</div>';
+		hidx++;
+	}
+	return h;
+}
+
+function verEstadísticas()
+{
+	currentView="stats_";
+	if(!$("#textoMarcado").hasClass("invisible"))
+	{
+		$("#textoMarcado").toggleClass("invisible");
+	}
+	if($("#estadisticas").hasClass("invisible"))
+	{
+		$("#estadisticas").toggleClass("invisible");
+	}
+	if(!$("#hitDetail").hasClass("invisible"))
+	{
+		$("#hitDetail").toggleClass("invisible");
+	}
+}
+
+
+function verTexto()
+{
+	currentView="texto_";
+	if($("#textoMarcado").hasClass("invisible"))
+	{
+		$("#textoMarcado").toggleClass("invisible");
+	}
+	if(!$("#estadisticas").hasClass("invisible"))
+	{
+		$("#estadisticas").toggleClass("invisible");
+	}
+	if(!$("#hitDetail").hasClass("invisible"))
+	{
+		$("#hitDetail").toggleClass("invisible");
+	}
+}
+
+function verHits()
+{
+	currentView="hit_";
+	if(!$("#textoMarcado").hasClass("invisible"))
+	{
+		$("#textoMarcado").toggleClass("invisible");
+	}
+	if(!$("#estadisticas").hasClass("invisible"))
+	{
+		$("#estadisticas").toggleClass("invisible");
+	}
+	if($("#hitDetail").hasClass("invisible"))
+	{
+		$("#hitDetail").toggleClass("invisible");
+	}
+}
+
+function getStats(hits)
+{
+	var cpaises=[];
+	var pcounts=[];
+	var cusos=[];
+	var ucounts=[];
+	for (hit of hits)
+	{
+		for (pais of hit["paises"])
+		{
+			var idx=cpaises.indexOf(pais);
+			if (idx==-1)
+			{
+				cpaises.push(pais);
+				pcounts.push(1);
+			}
+			else
+			{
+				pcounts[idx]++;
+			}
+		}
+		for (uso of hit["usos"])
+		{
+			var idx=cusos.indexOf(uso);
+			if (idx==-1)
+			{
+				cusos.push(uso);
+				ucounts.push(1);
+			}
+			else
+			{
+				ucounts[idx]++;
+			}
+		}
+	}
+	sortArray(cpaises,pcounts);
+	sortArray(cusos,ucounts);
+	var h="";
+	h+="<div class='hit'>"
+	h+="<div class='hitTitle'>Conteo de ocurrencias por país</div>"
+	for(var i=0;i<cpaises.length;i++)
+	{
+		var pic=cpaises[i];
+		h+="<div class=mhit>";
+		h+="<div class='count'>";
+		h+="<img src='flags/"+paises[pic][2]+"'";
+		h+="title='"+paises[pic][0]+"' class='miniPic'/>";
+		h+="</div>";
+		h+="<div class='count'>"+String(pcounts[i])+"</div>";
+		h+="</div>";
+	}
+	h+="</div>";
+	h+="<div class='hit'>"
+	h+="<div class='hitTitle'>Conteo de ocurrencias por uso</div>"
+	for(var i=0;i<cusos.length;i++)
+	{
+		var uso=cusos[i];
+		h+="<div class=mhit>";
+		h+="<div class='count'>";
+		h+="<svg class='miniBox'>";
+		h+="<rect width='32' height='32' style='fill:"+usos[uso][1]+";'>";
+		h+="<title>"+usos[uso][0]+"</title>";
+		h+="</title>";
+		h+="</svg>";
+		h+="</div>";
+		h+="<div class='count'>"+String(ucounts[i])+"</div>";
+		h+="</div>";
+	}
+	h+="</div>";
+	return h;
+}
+
+function sortArray(v,c){
+	for(var i=0;i<c.length-1;i++)
+	{
+		var sel=i;
+		for(var j=sel+1;j<c.length;j++)
+		{
+			if(c[sel]<c[j])
+			{
+				sel=j;
+			}
+		}
+		aux=c[i];
+		c[i]=c[sel];
+		c[sel]=aux;
+		aux=v[i];
+		v[i]=v[sel];
+		v[sel]=aux;
+	}
+}
 
 function analiza(data)
 {
-	var hits=data["hits"]
+	var hits=data["hits"];
+	var texto=data["tag"];
 	currentParagraphs=data["parrafos"];
 	currentHits=hits;
 	if(hits.length==0)
@@ -379,66 +584,22 @@ function analiza(data)
 	}
 	else
 	{
-		var h='';
-		var hidx=0;
-		for (hit of hits)
-		{
-			h+='<div class="hit" id="hit_'+String(hidx)+'">';
-			h+='<div class="hitHeader">';
-			h+='<div class="hitHeaderContent" style="width:15%">';
-			h+=hit["texto"];
-			h+='</div>';
-			h+='<div class="hitHeaderContent" style="width:25%">';
-			h+=getMatch(hit,hidx);
-			h+='</div>';
-			h+='<div class="hitHeaderContent" style="width:60%">';//Paises 
-			var clusters=getClusters(hit["variantes"]);
-			for (cluster of clusters)
-			{
-				c=0;
-				h+="<div class='hitGroup'>";
-				for (variante of cluster)
-				{
-					if(c==0)
-					{
-						var cidx=0;
-						for (concepto of hit["conceptos"])
-						{
-							if(variante[2]==concepto[0])
-							{
-								h+="<img src='"+concepto[3]+"' ";
-								h+="title='"+concepto[0]+"' class='mediumPic' onclick='showConcepto("+String(hidx)+","+String(cidx)+")'/>";
-								break;
-							}
-							cidx++;
-						}
-						var uso=getUso(variante[3])
-						h+="<svg class='miniBox'>";
-						h+="<rect width='32' height='32' style='fill:"+usos[uso][1]+";' onclick='showUso(\""+variante[3]+"\")'>";
-						h+="<title>"+usos[uso][0]+"</title>";
-						h+="</title>";
-						h+="</svg>";
-					}
-					
-					c++;
-					var pic=getPais(variante[1])
-					h+="<img src='flags/"+paises[pic][2]+"' ";
-					h+="title='"+paises[pic][0]+"' class='miniPic' onclick='showSinonimos("+String(pic)+","+String(cidx)+","+String(hidx)+")'/>";
-				}
-				h+="</div>";
-			}
-			h+='</div>';
-
-
-			h+='</div>';
-			h+='</div>';
-			hidx++;
-		}
+		var h="";
+		h+="<button class='sboton' onclick='verTexto()'>Texto marcado</button>";
+		h+="<button class='sboton' onclick='verHits()'>Lista de coincidencias("+String(hits.length)+")</button>";
+		h+="<button class='sboton' onclick='verEstadísticas()'>Estadísticas</button>";
+		h+="<div id='textoMarcado'>"+texto+"</div>";
+		h+="<div id='estadisticas' class='invisible'>"+getStats(hits)+"</div>";
+		h+="<div id='hitDetail' class='invisible'>"+getHits(hits)+"</div>";
 		$("#analiza").html(h);
+	}
+	if(currentView=="hit_")
+	{
+		verHits();
 	}
 	if(oldPos!="")
 	{
-		var myElement = document.getElementById('hit_'+String(oldPos));
+		var myElement = document.getElementById(currentView+String(oldPos));
 		var topPos = myElement.offsetTop;
 		document.getElementById('analiza').scrollTop = topPos;
 		oldPos="";
