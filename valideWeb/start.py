@@ -55,6 +55,8 @@ class myRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 			analiza(self)
 		if self.path=="/cambia":
 			cambia(self)
+		if self.path=="/searchConcepto":
+			conceptos(self)
 
 def isHit(colocacion,ngram):
 	toks=colocacion.split(" ")
@@ -92,12 +94,18 @@ def getTextoTag(parrafos,hits):
 	hs=hits[:]
 	hidx=0
 	while len(hs)>0:
+		print "*"
+		print ps
+		print pidx
+		print len(hs)
+		print texto
 		while pidx<hs[0]["pidx"]:
 			texto+="<p>"+ps[0]+"</p>"
 			pidx+=1
 			del ps[0]
 		cparrafo=ps[0]
 		del ps[0]
+		pidx+=1
 		(words,separators)=wordMe(cparrafo)
 		cparrafo="<p>"
 		needSpace=False
@@ -119,7 +127,7 @@ def getTextoTag(parrafos,hits):
 			if i==ppi:
 				if needSpace:
 					cparrafo+=" "
-				cparrafo+="<span class='thit' id='texto_"+str(hidx)+"'>"
+				cparrafo+="<span class='thit' id='texto_"+str(hidx)+"' onclick='clickMe("+str(hidx)+")'>"
 				closeSpan=True
 			needSpace=True
 			while len(separators)>0 and separators[0][1]==i:
@@ -137,10 +145,17 @@ def getTextoTag(parrafos,hits):
 			del separators[0]
 		cparrafo+="</p>"
 		print cparrafo
-	texto+=cparrafo
+		texto+=cparrafo
 	for p in ps:
 		texto+="<p>"+p+"</p>"
 	return texto
+
+def conceptos(request):
+	vars=request.getVars()
+	target=vars["texto"][0]
+	c=conn.cursor()
+	rows=c.execute("select * from conceptos where nombre like '"+target+"%' or nombre like '%"+target+"' or nombre='"+target+"'").fetchall()
+	request.wfile.write(clean(json.dumps({"conceptos":rows})))
 
 def cambia(request):
 	vars=request.getVars()
@@ -200,6 +215,7 @@ def cambia(request):
 	replace=True
 	#Obtener la conjugacion del original
 	obases=getCompleteBases(original)
+	nbases=getCompleteBases(sinonimo)
 	x=0
 	while x!=len(obases):
 		if obases[x][2][0]=='N' and spos=='sustantivo' or obases[x][2][0]=='V' and spos=='verbo':
@@ -207,15 +223,15 @@ def cambia(request):
 		else:
 			del obases[x]
 	print obases
-	conjugado= obases[0][0]!=original
-	print conjugado
 	print ppi
 	for i in range(0,len(words)):
 		while len(separators)>0 and separators[0][1]==i:
 			texto+=separators[0][0]
 			del separators[0]
-		if i==ppia and conjugado and articulo>-1:
-			texto+=articulos[obases[0][2][3].lower()+obases[0][2][4].lower()][articulo]
+		if i==ppia and articulo>-1:
+			print nbases[0]
+			print articulos
+			texto+=articulos[nbases[0][2][2].lower()+nbases[0][2][3].lower()][articulo]
 		else:
 			if i>=ppi and i<ppi+longitud:
 				if replace:

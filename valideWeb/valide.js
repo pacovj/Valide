@@ -3,7 +3,7 @@ var limite=15;
 var usos=[]
 var selPaises;
 var selUsos;
-var currentView="hit_";
+var currentView="texto_";
 
 function toTitleCase(str)
 {
@@ -368,6 +368,48 @@ function showConcepto(hidx,cidx)
 var currentHits;
 var currentParagraphs;
 
+function getHit(hidx)
+{
+	var hit=currentHits[hidx];
+	var h="";
+	var clusters=getClusters(hit["variantes"]);
+	for (cluster of clusters)
+	{
+		c=0;
+		h+="<div class='hitGroup'>";
+		for (variante of cluster)
+		{
+			if(c==0)
+			{
+				var cidx=0;
+				for (concepto of hit["conceptos"])
+				{
+					if(variante[2]==concepto[0])
+					{
+						h+="<img src='"+concepto[3]+"' ";
+						h+="title='"+concepto[0]+"' class='mediumPic' onclick='showConcepto("+String(hidx)+","+String(cidx)+")'/>";
+						break;
+					}
+					cidx++;
+				}
+				var uso=getUso(variante[3])
+				h+="<svg class='miniBox'>";
+				h+="<rect width='32' height='32' style='fill:"+usos[uso][1]+";' onclick='showUso(\""+variante[3]+"\")'>";
+				h+="<title>"+usos[uso][0]+"</title>";
+				h+="</title>";
+				h+="</svg>";
+			}
+			
+			c++;
+			var pic=getPais(variante[1])
+			h+="<img src='flags/"+paises[pic][2]+"' ";
+			h+="title='"+paises[pic][0]+"' class='miniPic' onclick='showSinonimos("+String(pic)+","+String(cidx)+","+String(hidx)+")'/>";
+		}
+		h+="</div>";
+	}
+	return h;
+}
+
 function getHits(hits)
 {
 	var h='';
@@ -383,41 +425,7 @@ function getHits(hits)
 		h+=getMatch(hit,hidx);
 		h+='</div>';
 		h+='<div class="hitHeaderContent" style="width:60%">';//Paises 
-		var clusters=getClusters(hit["variantes"]);
-		for (cluster of clusters)
-		{
-			c=0;
-			h+="<div class='hitGroup'>";
-			for (variante of cluster)
-			{
-				if(c==0)
-				{
-					var cidx=0;
-					for (concepto of hit["conceptos"])
-					{
-						if(variante[2]==concepto[0])
-						{
-							h+="<img src='"+concepto[3]+"' ";
-							h+="title='"+concepto[0]+"' class='mediumPic' onclick='showConcepto("+String(hidx)+","+String(cidx)+")'/>";
-							break;
-						}
-						cidx++;
-					}
-					var uso=getUso(variante[3])
-					h+="<svg class='miniBox'>";
-					h+="<rect width='32' height='32' style='fill:"+usos[uso][1]+";' onclick='showUso(\""+variante[3]+"\")'>";
-					h+="<title>"+usos[uso][0]+"</title>";
-					h+="</title>";
-					h+="</svg>";
-				}
-				
-				c++;
-				var pic=getPais(variante[1])
-				h+="<img src='flags/"+paises[pic][2]+"' ";
-				h+="title='"+paises[pic][0]+"' class='miniPic' onclick='showSinonimos("+String(pic)+","+String(cidx)+","+String(hidx)+")'/>";
-			}
-			h+="</div>";
-		}
+		h+=getHit(hidx);
 		h+='</div>';
 
 
@@ -572,6 +580,22 @@ function sortArray(v,c){
 	}
 }
 
+function clickMe(hidx)
+{
+	$(".thit").each(function()
+	{
+		if($(this).hasClass("blue"))
+		{
+			$(this).toggleClass("blue")
+		}
+	});
+	$("#texto_"+String(hidx)).toggleClass("blue");
+	var h="";
+	h+="<div class='hitTitle'>"+currentHits[hidx]["texto"]+"</div>";
+	h+=getHit(hidx);
+	$(".hitView").html(h);
+}
+
 function analiza(data)
 {
 	var hits=data["hits"];
@@ -588,7 +612,17 @@ function analiza(data)
 		h+="<button class='sboton' onclick='verTexto()'>Texto marcado</button>";
 		h+="<button class='sboton' onclick='verHits()'>Lista de coincidencias("+String(hits.length)+")</button>";
 		h+="<button class='sboton' onclick='verEstadísticas()'>Estadísticas</button>";
-		h+="<div id='textoMarcado'>"+texto+"</div>";
+		h+="<div id='textoMarcado'>"
+		h+="<div class='tc'>";
+		h+="<div class='textView'>";
+		h+=texto;
+		h+="</div>";
+		h+="<div class='empty'></div>";
+		h+="<div class='hitView'>";
+		h+="</div>";
+		h+="<div class='empty'></div>";
+		h+="</div>";
+		h+="</div>";
 		h+="<div id='estadisticas' class='invisible'>"+getStats(hits)+"</div>";
 		h+="<div id='hitDetail' class='invisible'>"+getHits(hits)+"</div>";
 		$("#analiza").html(h);
@@ -597,8 +631,16 @@ function analiza(data)
 	{
 		verHits();
 	}
+	else
+	{
+		clickMe(0);
+	}
 	if(oldPos!="")
 	{
+		if(currentView=="texto_")
+		{
+			clickMe(oldPos);
+		}
 		var myElement = document.getElementById(currentView+String(oldPos));
 		var topPos = myElement.offsetTop;
 		document.getElementById('analiza').scrollTop = topPos;
@@ -666,4 +708,42 @@ function extractCheckValues(id)
 		}
 	);
 	return sel;
+}
+
+var currentConceptos="";
+
+function searchConcepto()
+{
+	if($("#ctarget").val().length>0)
+	{
+		askSomething("searchConcepto",{"texto":$("#ctarget").val().toUpperCase()},getConceptos,{});
+	}
+	else
+	{
+		alert("Tienes que escribir algun texto");
+	}
+}
+
+function getConceptos(data)
+{
+	var currentConceptos=data["conceptos"];
+	var h="";
+	var cidx=0;
+	for(concepto of currentConceptos)
+	{
+		h+='<div class="chit" onclick="expandMe('+String(cidx)+')">'
+		h+="<div class='fchit' style='width:20%'>"
+		h+="<img src='"+concepto[3]+"' class='mediumPic'/>";
+		h+="</div>";
+		h+="<div class='fchit' style='width:80%'>"
+		h+=concepto[0];
+		h+="</div>";
+		h+="</div>";
+		cidx+=1;
+	}
+	$(".searchResults").html(h);
+}
+
+function expandMe(cidx)
+{
 }

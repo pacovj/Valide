@@ -89,6 +89,7 @@
 	box-shadow: 8px 8px 5px grey;
 	height:440px;
 	overflow-y: auto;
+	width:98%;
 }
 
 .titulo
@@ -207,7 +208,7 @@
 
 .hitGroup
 {
-	display:inline;
+	display:block;
 	padding:5px;
 	margin-right:20px;
 }
@@ -413,4 +414,106 @@
 	font-size:18px;
 	cursor:pointer;
 	text-decoration:underline;
+}
+
+.textView
+{
+	height:360px;
+	overflow-y:auto;
+	display:table-cell;
+	width:74%;
+	border: 1px solid gray;
+	padding-left:12px;
+	padding-right:12px;
+}
+
+.empty
+{
+	display:table-cell;
+	width:1%;
+}
+
+.hitView
+{
+	height:360px;
+	overflow-y:auto;
+	display:table-cell;
+	width:24%;
+	margin-right:12px;
+	
+	padding:10px;
+	border: 2px solid #0C536B;
+	box-shadow: 4px 4px 3px grey;
+}
+#textoMarcado
+{
+	width:100%;
+}
+.tc
+{
+	display:table;
+	width:100%;
+}
+
+.blue
+{
+	color:blue;
+}
+
+.panelConceptos:
+{
+	display:table-row;
+}
+.search
+{
+	display:table-cell;
+	padding:12px;
+	width:30%;
+}
+
+.result
+{
+	display:table-cell;
+	padding:12px;
+	width:70%;
+}
+
+.searchPanel
+{
+	padding-bottom:12px;
+}
+
+.searchButton
+{
+	padding-left:12px;
+	cursor:pointer;
+}
+
+.searchResults
+{
+	border: 1px solid grey;
+	box-shadow: 4px 4px 2px grey;
+	overflow-y: auto;
+	height:340px;
+}
+
+.chit
+{
+	display:table;
+	cursor:pointer;
+	width:100%;
+}
+.chit:hover{
+	color:blue;
+	font-weight:bold;
+}
+.fchit
+{
+	display:table-cell;
+	vertical-align:middle;
+	font-size:12px;
+	cursor:pointer;
+	padding-top:6px;
+	padding-bottom:6px;
+	border-bottom: 1px solid #0C536B;
 }
