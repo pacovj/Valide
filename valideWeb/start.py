@@ -9,6 +9,9 @@ import subprocess
 import json
 import time
 import xml.etree.ElementTree as ET
+import base64
+import hashlib
+import random
 
 articulos={"ms":["un","el","ese","este","aquel","algún","ningún"],
 	"mp":["unos","los","esos","estos","aquellos","algunos","ningunos"],
@@ -57,6 +60,20 @@ class myRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 			cambia(self)
 		if self.path=="/searchConcepto":
 			conceptos(self)
+		if self.path=="/nuevoConcepto":
+			nuevoConcepto(self)
+		if self.path=="/borraConcepto":
+			borraConcepto(self)
+		if self.path=="/salvaConcepto":
+			cambiaConcepto(self)
+		if self.path=="/dameVariantes":
+			dameVariantes(self)
+		if self.path=="/createVariante":
+			createVariante(self)
+		if self.path=="/updateVariante":
+			updateVariante(self)
+		if self.path=="/borraVariante":
+			borraVariante(self)
 
 def isHit(colocacion,ngram):
 	toks=colocacion.split(" ")
@@ -90,167 +107,87 @@ def wordMe(paragraph):
 def getTextoTag(parrafos,hits):
 	pidx=0
 	texto=""
-	ps=parrafos[:]
-	hs=hits[:]
 	hidx=0
-	while len(hs)>0:
-		print "*"
-		print ps
-		print pidx
-		print len(hs)
-		print texto
-		while pidx<hs[0]["pidx"]:
-			texto+="<p>"+ps[0]+"</p>"
-			pidx+=1
-			del ps[0]
-		cparrafo=ps[0]
-		del ps[0]
-		pidx+=1
-		(words,separators)=wordMe(cparrafo)
-		cparrafo="<p>"
-		needSpace=False
-		ppi=hs[0]["ppi"]
-		longitud=len(wordMe(hs[0]["texto"])[0])
-		print words
-		print separators
-		print ppi
-		print longitud
-		closeSpan=False
+	for parrafo in parrafos:
+		cparrafo=""
+		(words,separators)=wordMe(parrafo)
+		sidx=0
 		for i in range(0,len(words)):
-			if i==ppi+longitud:
-				cparrafo+="</span>"
-				del hs[0]
-				hidx+=1
-				closeSpan=False
-				if len(hs)>0:
-					ppi=hs[0]["ppi"]
-			if i==ppi:
-				if needSpace:
-					cparrafo+=" "
-				cparrafo+="<span class='thit' id='texto_"+str(hidx)+"' onclick='clickMe("+str(hidx)+")'>"
-				closeSpan=True
-			needSpace=True
-			while len(separators)>0 and separators[0][1]==i:
-				cparrafo+=separators[0][0]
-				del separators[0]
-			if needSpace and i!=ppi:
+			if hidx<len(hits) and hits[hidx]["pidx"]==pidx:
+				longitud=len(wordMe(hits[hidx]["texto"])[0])
+				if i==hits[hidx]["ppi"]+longitud:
+					cparrafo+="</span>"
+					hidx+=1
+			if sidx<len(separators) and separators[sidx][1]==i:
+				cparrafo+=separators[sidx][0]
+				sidx+=1
+			if i>0:
 				cparrafo+=" "
+			if hidx<len(hits) and hits[hidx]["pidx"]==pidx:
+				if i==hits[hidx]["ppi"]:
+					cparrafo+="<span class='thit' id='texto_"+str(hidx)+"' onclick='clickMe("+str(hidx)+")'>"
 			cparrafo+=words[i]
-		if closeSpan:
-			cparrafo+="</span>"
-			del hs[0]
-			hidx+=1
-		while len(separators)>0:
-			cparrafo+=separators[0][0]
-			del separators[0]
-		cparrafo+="</p>"
-		print cparrafo
-		texto+=cparrafo
-	for p in ps:
-		texto+="<p>"+p+"</p>"
+		if cparrafo=="":
+			texto+="<p>"+parrafo+"</p>"
+		else:
+			texto+="<p>"+cparrafo+"</p>"
+		pidx+=1
 	return texto
 
 def conceptos(request):
 	vars=request.getVars()
 	target=vars["texto"][0]
 	c=conn.cursor()
-	rows=c.execute("select * from conceptos where nombre like '"+target+"%' or nombre like '%"+target+"' or nombre='"+target+"'").fetchall()
+	rows=c.execute("select * from conceptos where nombre like '"+target+"%' or nombre='"+target+"'").fetchall()
 	request.wfile.write(clean(json.dumps({"conceptos":rows})))
 
 def cambia(request):
 	vars=request.getVars()
 	texto=""
-	parrafo=vars['text'][0]
+	parrafo=cleanMe(vars['text'][0])
 	sinonimo=vars["sinonimo"][0]
-	sgenero=vars["singen"][0]
 	spos=vars["sinpos"][0]
 	original=vars["original"][0]
 	ppi=int(vars["ppi"][0])
+	print "Cambiando"
 	(words,separators)=wordMe(parrafo)
+	print parrafo
 	(owords,oseparators)=wordMe(original)
 	#Buscar el articulo
-	genero=""
-	numero=""
-	articulo=-1
-	ppia=-1
-	isTitle=False;
-	longitud=len(owords);
-	for i in range(1,3):
-		if (ppi-i>=0) and words[ppi-i].lower() in articulos['ms']:
-			isTitle=words[ppi-i].lower()!=words[ppi-i]
-			genero="masculino"
-			numero="s"
-			ppia=ppi-i
-			articulo=articulos['ms'].index(words[ppi-i].lower())
-			break
-		if (ppi-i>=0) and words[ppi-i].lower() in articulos['mp']:
-			isTitle=words[ppi-i].lower()!=words[ppi-i]
-			genero="masculino"
-			numero="p"
-			ppia=ppi-i
-			articulo=articulos['mp'].index(words[ppi-i].lower())
-			break
-		if (ppi-i>=0) and words[ppi-i] in articulos['fs']:
-			isTitle=words[ppi-i].lower()!=words[ppi-i]
-			genero="femenino"
-			numero="s"
-			ppia=ppi-i
-			articulo=articulos['fs'].index(words[ppi-i].lower())
-			break
-		if (ppi-i>=0) and words[ppi-i] in articulos['fp']:
-			isTitle=words[ppi-i].lower()!=words[ppi-i]
-			genero="femenino"
-			numero="plural"
-			ppia=ppi-i
-			articulo=articulos['fp'].index(words[ppi-i].lower())
-			break
-	print articulo
-	print isTitle
-	print genero
-	print numero
-	print words
-	print separators
 	#reemplazar el original por sinonimo
 	texto=''
-	replace=True
 	#Obtener la conjugacion del original
-	obases=getCompleteBases(original)
-	nbases=getCompleteBases(sinonimo)
-	x=0
-	while x!=len(obases):
-		if obases[x][2][0]=='N' and spos=='sustantivo' or obases[x][2][0]=='V' and spos=='verbo':
-			x+=1
-		else:
-			del obases[x]
+	obases=getCompleteBases(original,spos)
+	target=getNewBases(sinonimo,obases[0])
 	print obases
-	print ppi
-	for i in range(0,len(words)):
+	if target=="":
+		target=sinonimo
+	if original[0].isupper():
+		target=target.capitalize()
+	longitud=len(owords)
+	print target
+	i=0
+	while i<len(words):
 		while len(separators)>0 and separators[0][1]==i:
 			texto+=separators[0][0]
 			del separators[0]
-		if i==ppia and articulo>-1:
-			print nbases[0]
-			print articulos
-			texto+=articulos[nbases[0][2][2].lower()+nbases[0][2][3].lower()][articulo]
+		j=0
+		count=0
+		if i>0:
+			texto+=" "
+		while j<longitud and (i+j)<len(words):
+			if words[i+j].lower()==owords[j].lower():
+				count+=1
+			j+=1
+		if count>=longitud:
+			texto+=target
 		else:
-			if i>=ppi and i<ppi+longitud:
-				if replace:
-					tt=sinonimo
-					if len(obases)>0:
-						s=getNewBases(sinonimo,obases[0])
-						if s!="":
-							tt=s
-					if texto!="":
-						texto+=" "
-					texto+=tt
-					replace=False
-			else:
-				if texto!="":
-					texto+=" "
-				texto+=words[i]
+			texto+=words[i]
+		i+=1
 	while len(separators)>0:
 		texto+=separators[0][0]
 		del separators[0]
+	print "exito"
 	print texto
 	print clean(texto)
 	request.wfile.write(json.dumps({"texto":clean(texto)}))
@@ -366,7 +303,7 @@ def lexMe(morphs,paragraphs):
 				if len(rows)>0:#tiene colocaciones. Siempre se le da preferencia a las colocaciones
 					for r in rows:
 						if isHit(r[0],chunk[i:i+r[1]]):
-							variante="texto='"+r[0]+"'"
+							variante="texto='"+r[0].replace("'","''")+"'"
 							for j in range(0,r[1]):
 								if original!='':
 									original+=' '
@@ -379,7 +316,7 @@ def lexMe(morphs,paragraphs):
 					for morph in chunk[i]:
 						if variante!='':
 							variante+=' or '
-						variante+="texto = '"+morph+"'"
+						variante+="texto = '"+morph.replace("'","''")+"'"
 					original=chunk[i][0]
 					i+=1
 					offset=1
@@ -396,7 +333,7 @@ def getConditionString(field,bases):
 	for base in bases:
 		if w>0:
 			t+=' or '
-		t+=field+"='"+base+"'"
+		t+=field+"='"+base.replace("'","''")+"'"
 		w+=1
 	return t
 
@@ -425,7 +362,7 @@ def getBases(word):
 	bases=[]
 	bases.append(word)
 	c = conn.cursor()
-	rows=c.execute("select baseForm from morph where morph='"+word.lower()+"';").fetchall()
+	rows=c.execute("select baseForm from morph where morph='"+word.lower().replace("'","''")+"';").fetchall()
 	for r in rows:
 		if not r[0] in bases:
 			bases.append(r[0])
@@ -439,9 +376,14 @@ def getNewBases(sinonimo,base):
 	else:
 		return ""
 
-def getCompleteBases(word):
+def getCompleteBases(word,spos):
 	c = conn.cursor()
-	rows=c.execute("select * from morph where morph='"+word.lower()+"';").fetchall()
+	pos='%'
+	if spos=="sustantivo":
+		pos='N%'
+	if spos=="verbo":
+		pos='V%'
+	rows=c.execute("select * from morph where morph='"+word.lower()+"' and tag like '"+pos+"' ;").fetchall()
 	return rows
 
 def morphMe(chunks):
@@ -546,6 +488,131 @@ class myServer(SocketServer.TCPServer):
 	def handle_timeout(self):
 		global keepWorking
 		keepWorking=False
+
+def savePic(base,name):
+	t=base64.b64decode(base)
+	i=name
+	f=open(i,'wb')
+	f.write(t)
+	f.close()
+
+def nuevoConcepto(request):
+	vars=request.getVars()
+	target=vars["pic"][0]
+	nombre=cleanMe(vars["nombre"][0])
+	lengua=cleanMe(vars["lengua"][0])
+	definicion=cleanMe(vars["definicion"][0])
+	if len(definicion)<1:
+		definicion="No disponible"
+	target=vars["pic"][0]
+	name=target
+	if target!="ref.jpg":
+		m=hashlib.md5()
+		m.update(nombre)
+		name='./pics/'+m.hexdigest()+".jpg"
+		savePic(target,name)
+	c=conn.cursor()
+	c.execute("insert into Conceptos values('"+nombre+"','"+lengua+"','"+definicion+"','"+name+"')")
+	conn.commit()
+	request.wfile.write(clean(json.dumps({"done":"ok"})))
+
+def borraConcepto(request):
+	vars=request.getVars()
+	nombre=cleanMe(vars["nombre"][0])
+	c=conn.cursor()
+	c.execute("delete from Variantes where concepto='"+nombre+"';")
+	c.execute("delete from Conceptos where nombre='"+nombre+"';")
+	conn.commit()
+	request.wfile.write(clean(json.dumps({"done":"ok"})))
+
+def cambiaConcepto(request):
+	vars=request.getVars()
+	target=vars["pic"][0]
+	nombre=cleanMe(vars["nombre"][0])
+	original=cleanMe(vars["original"][0])
+	lengua=cleanMe(vars["lengua"][0])
+	definicion=cleanMe(vars["definicion"][0])
+	if len(definicion)<1:
+		definicion="No disponible"
+	target=vars["pic"][0]
+	print vars["nuevaPic"][0]
+	replacePic=vars["nuevaPic"][0]=="true"
+	name=target
+	if replacePic:
+		m=hashlib.md5()
+		m.update(nombre)
+		name='./pics/'+m.hexdigest()+"_"+str(random.randint(0,1000))+".jpg"
+		savePic(target,name)
+		print "Archivo guardado"
+	c=conn.cursor()
+	print "update Variantes set concepto='"+nombre+"' where concepto='"+original+"'"
+	print "update Conceptos set nombre='"+nombre+"',lenguaControl='"+lengua+"',glosa='"+definicion+"',imagen='"+name+"' where nombre='"+original+"'"
+	c.execute("update Variantes set concepto='"+nombre+"' where concepto='"+original+"'")
+	c.execute("update Conceptos set nombre='"+nombre+"',lenguaControl='"+lengua+"',glosa='"+definicion+"',imagen='"+name+"' where nombre='"+original+"'")
+	conn.commit()
+	request.wfile.write(clean(json.dumps({"done":"ok"})))
+
+def dameVariantes(request):
+	vars=request.getVars()
+	concepto=cleanMe(vars["nombre"][0])
+	c=conn.cursor()
+	print "select * from variantes where concepto='"+concepto+"';"
+	rows=c.execute("select * from variantes where concepto='"+concepto+"' order by pais;").fetchall()
+	conn.commit()
+	request.wfile.write(clean(json.dumps({"variantes":rows})))
+
+def createVariante(request):
+	vars=request.getVars()
+	base=cleanMe(vars["nombre"][0])
+	uso=cleanMe(vars["uso"][0])
+	concepto=cleanMe(vars["concepto"][0])
+	pais=cleanMe(vars["pais"][0])
+	genero=cleanMe(vars["genero"][0])
+	pos=cleanMe(vars["pos"][0])
+	nivel=cleanMe(vars["nivel"][0])
+	nota=cleanMe(vars["nota"][0])
+	ejemplo=cleanMe(vars["ejemplo"][0])
+	dispersion=cleanMe(vars["dispersion"][0])
+	c=conn.cursor()
+	sq="insert into variantes values('"+base+"','"+pais+"','"+concepto+"','"+uso+"','"+genero+"','"+pos+"',"+nivel+",'"+nota+"','"+ejemplo+"',"+dispersion+")"
+	print sq
+	rows=c.execute(sq).fetchall()
+	conn.commit()
+	request.wfile.write(clean(json.dumps({"variantes":rows})))
+
+def updateVariante(request):
+	vars=request.getVars()
+	base=cleanMe(vars["nombre"][0])
+	uso=cleanMe(vars["uso"][0])
+	concepto=cleanMe(vars["concepto"][0])
+	pais=cleanMe(vars["pais"][0])
+	genero=cleanMe(vars["genero"][0])
+	pos=cleanMe(vars["pos"][0])
+	nivel=cleanMe(vars["nivel"][0])
+	nota=cleanMe(vars["nota"][0])
+	ejemplo=cleanMe(vars["ejemplo"][0])
+	dispersion=cleanMe(vars["dispersion"][0])
+	c=conn.cursor()
+	sq="update variantes set genero='"+genero+"',pos='"+pos+"',nivel="+nivel+",nota='"+nota+"',ejemplo='"+ejemplo+"',dispersion="+dispersion+" where "
+	sq+="texto='"+base+"' and concepto='"+concepto+"' and uso='"+uso+"' and pais='"+pais+"';"
+	print sq
+	rows=c.execute(sq).fetchall()
+	conn.commit()
+	request.wfile.write(clean(json.dumps({"variantes":rows})))
+
+def borraVariante(request):
+	vars=request.getVars()
+	base=cleanMe(vars["nombre"][0])
+	uso=cleanMe(vars["uso"][0])
+	concepto=cleanMe(vars["concepto"][0])
+	c=conn.cursor()
+	sq="delete from variantes where "
+	sq+="texto='"+base+"' and concepto='"+concepto+"' and uso='"+uso+"';"
+	print sq
+	rows=c.execute(sq).fetchall()
+	conn.commit()
+	request.wfile.write(clean(json.dumps({"variantes":rows})))
+
 
 if __name__ == "__main__":
 	print 'Starting httpd...'

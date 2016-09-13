@@ -37,7 +37,7 @@
 .logos
 {
 	position:fixed;
-	bottom:30px;
+	top:30px;
 	right:25px;
 }
 
@@ -182,6 +182,13 @@
 	display:table-cell;
 }
 
+.microPic
+{
+	height:20px;
+	margin-right:2px;
+	margin-left:2px;
+}
+
 .miniPic
 {
 	height:32px;
@@ -261,6 +268,7 @@
 	vertical-align:top;
 }
 
+
 .close:hover,
 .close:focus {
 		font-weight: bold;
@@ -291,6 +299,7 @@
 .milabel
 {
 	font-weight:bold;
+	vertical-align:top;
 }
 
 #texto
@@ -418,13 +427,13 @@
 
 .textView
 {
-	height:360px;
-	overflow-y:auto;
-	display:table-cell;
-	width:74%;
+	float:left;
+	width:70%;
 	border: 1px solid gray;
 	padding-left:12px;
 	padding-right:12px;
+	height:380px;
+	overflow-y:auto;
 }
 
 .empty
@@ -435,6 +444,7 @@
 
 .hitView
 {
+	float:right;
 	height:360px;
 	overflow-y:auto;
 	display:table-cell;
@@ -462,20 +472,21 @@
 
 .panelConceptos:
 {
-	display:table-row;
+	display:table;
 }
+
 .search
 {
 	display:table-cell;
 	padding:12px;
-	width:30%;
+	width:210px;
+	vertical-align:top;
 }
 
 .result
 {
 	display:table-cell;
 	padding:12px;
-	width:70%;
 }
 
 .searchPanel
@@ -497,6 +508,27 @@
 	height:340px;
 }
 
+.variantes
+{
+	display:table;
+}
+
+.listaVariantes
+{
+	border: 1px solid grey;
+	box-shadow: 4px 4px 2px grey;
+	overflow-y: auto;
+	width:300px;
+	display:table-cell;
+}
+
+.varianteActual
+{
+	display:table-cell;
+	padding-left:20px;
+	width:618px;
+}
+
 .chit
 {
 	display:table;
@@ -514,6 +546,112 @@
 	font-size:12px;
 	cursor:pointer;
 	padding-top:6px;
+	padding-left:6px;
 	padding-bottom:6px;
 	border-bottom: 1px solid #0C536B;
+}
+
+.bigPic
+{
+	height:200px;
+	border: 1px dotted grey;
+	margin-bottom:6px;
+	margin-top:6px;
+}
+
+.full
+{
+	width:100%;
+	margin-bottom:6px;
+}
+.cell2
+{
+	display:table-cell;
+	width:450px;
+	padding-right:20px;
+}
+
+.cell240
+{
+	width:40%;
+	margin-bottom:12px;
+}
+.cell260
+{
+	width:100%;
+	margin-bottom:12px;
+	padding-right:6px;
+}
+
+.full input,textarea
+{
+	display:table-cell; 
+	width:97%;
+	margin-bottom:6px;
+}
+
+.boton
+{
+	cursor:pointer;
+	text-decoration:none;
+	float:right;
+	font-size:30px;
+	vertical-align:top;
+}
+
+
+.bborder
+{
+	padding-bottom:20px;
+	border-bottom:1px double black;
+}
+
+.nextBoton
+{
+	position:absolute;
+	top:20%;
+	right:5%;
+	font-weight:bold;
+	font-size:18px;
+	width:38px;
+	padding-top:4px;
+	height:25px;
+	text-align:center;
+	vertical-align:middle;
+	color:black;
+	border-radius:100%;
+	border: 2px solid black;
+	cursor:pointer;
+	background-color:#eeeeee;
+	box-shadow: 3px 3px 2px grey;
+}
+.nextBoton:hover
+{
+	box-shadow: 3px 3px 2px blue;
+	border: 3px solid black;
+}
+
+input{
+	margin-bottom:12px;
+}
+textarea{
+	margin-bottom:12px;
+}
+select{
+	margin-bottom:12px;
+	margin-right:24px;
+}
+
+.check
+{
+	margin:0px;
+	height:14px;
+	padding:0px;
+	max-width:20px;
+}
+
+.input2
+{
+	margin-right:24px;
+	max-width:100px;
 }
