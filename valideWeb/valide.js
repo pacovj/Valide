@@ -85,7 +85,14 @@ function askSomething(script,params,localHandler,localParams)
 				local:localParams,
 				success:function(data)
 				{
-					localHandler(JSON.parse(data));
+					if(typeof data["error"]=='undefined')
+					{
+						localHandler(JSON.parse(data));
+					}
+					else
+					{
+						alert("Ocurrio un error inesperado")
+					}
 				}
 			}
 		);
@@ -197,50 +204,6 @@ function vec2str(vec)
 	return str;
 }
 
-function getMatch(hit,hidx)
-{
-	var words=hit['parrafo'].split(" ");
-	var longitud=hit['texto'].split(" ").length;
-	var radio=8;
-	var h="<div style='font-weight:normal;cursor:pointer;' onclick='showParagraph("+String(hit["pidx"])+","+String(hidx)+")'>";
-	for(var i=0;i<words.length;i++)
-	{
-		if(i==hit["ppi"])
-		{
-			h+="<span style='font-size:20px;font-weight:normal;'>";
-		}
-		if(i==hit["ppi"]+longitud)
-		{
-			h+="</span>";
-		}
-		if(i>hit["ppi"]-radio&&i<hit["ppi"]+radio)
-		{
-			if(i==1+hit["ppi"]-radio&&i>0)
-			{
-				h+="..."
-			}
-			else
-			{
-				h+=" ";
-			}
-			h+=words[i];
-		}
-		if(i==hit["ppi"]+radio)
-		{
-			if(i<words.length-1)
-			{
-				h+="..."
-			}
-		}
-	}
-	if(i==hit["ppi"]+longitud)
-	{
-		h+="</span>";
-	}
-	h+="</div>";
-	return h;
-}
-
 function dismiss(target)
 {
 	$(target).toggleClass("invisible");
@@ -258,17 +221,34 @@ function setParrafo()
 function saveParrafo(pidx,hidx)
 {
 	var v="";
+	var cidx=-1;
 	for(var i=0;i<currentParagraphs.length;i++)
 	{
+		if(cidx!=currentipidxs[i])
+		{
+			if(v!="")
+			{
+				v+="\n";
+			}
+			cidx=currentipidxs[i];
+		}
 		if(pidx==i)
 		{
-			v+=$("#parrafo").val()+"\n";
+			v+=$("#parrafo").val().trim();
 		}
 		else{
-			v+=currentParagraphs[i]+"\n";
+			v+=currentParagraphs[i].trim();
+		}
+		if(!v.trim().endsWith("."))
+		{
+			v=v.trim()+".";
+		}
+		if(!v.endsWith(" "))
+		{
+			v+=" ";
 		}
 	}
-	$("#texto").val(v);
+	$("#texto").val(limpiame(v));
 	dismiss("#dialog");
 	oldPos=hidx;
 	analizaTexto();
@@ -278,7 +258,8 @@ var oldPos="";
 
 function showSinonimos(paisix,conceptoix,hitix)
 {
-	oldP=currentHits[hitix]["parrafo"];
+	oldP=$("<div>"+currentHits[hitix]["parrafo"]+"</div>").text();
+	oldP=limpiame(oldP);
 	$("#dialog").toggleClass("invisible");
 	$(".modal-title").html("Edita tu parrafo usando variantes de "+currentHits[hitix]["conceptos"][conceptoix][0]+" en "+paises[paisix][0]);
 	$("#picBox").attr("class","textBox");
@@ -315,19 +296,61 @@ function showSinonimos(paisix,conceptoix,hitix)
 	$("#sinonimos").attr("style","height:140px;overflow-y:auto;text-align:center;");
 	$("#sinonimos").html(p);
 }
-
+var alertarCambio;
 function cambiar(sinidx,hidx)
 {
 	var hit=currentHits[hidx];
 	var sinonimo=hit["sinonimos"][sinidx];
 	var original=hit["texto"];
+	var cv="";
+	for (v of hit["sinonimos"])
+	{
+		if(v[0]==hit["variantes"][0][0])
+		{
+			cv=v;
+		}
+	}
+	alertarCambio=false;
+	if (cv!="")
+	{
+		alertarCambio=sinonimo[4]!=cv[4];
+	}
 	hit["texto"]=sinonimo[0];
 	askSomething("cambia",{"text":limpiaUnicode($("#parrafo").val()),"sinonimo":sinonimo[0],"sinpos":sinonimo[5],"singen":sinonimo[4],"original":original,"ppi":hit["ppi"]},cambia,{});
 }
 
+function limpiame(data)
+{
+	var c=0;
+	var t="";
+	for(c=0;c<data.length;c++)
+	{
+		if(data[c]=="&"&&data[c+1]=="#"&&data[c+2]=="x")
+		{
+			c=c+2;
+			co="0";
+			while(data[c]!=";")
+			{
+				co+=data[c];
+				c++;
+			}
+			t+=String.fromCharCode(parseInt(co));
+		}
+		else
+		{
+			t+=data[c];
+		}
+	}
+	return t;
+}
+
 function cambia(data)
 {
-	$("#parrafo").val(data["texto"]);
+	$("#parrafo").val(limpiame(data["texto"]));
+	if(alertarCambio)
+	{
+		alert("¡Hubo cambio de genero/número!");
+	}
 }
 
 var oldP;
@@ -436,10 +459,20 @@ function getHits(hits)
 		h+='<div class="hitHeaderContent" style="width:15%">';
 		h+=hit["texto"];
 		h+='</div>';
-		h+='<div class="hitHeaderContent" style="width:25%">';
-		h+=getMatch(hit,hidx);
+		h+='<div class="hitHeaderContent" style="width:40%">';
+		var np=$("<div>"+hit["parrafo"]+"</div>");
+		np.find(".thit").each(function()
+		{
+			if (!$(this).hasClass("texto_"+String(hidx)))
+			{
+				$(this).toggleClass("thit");
+			}
+			$(this).attr("onclick","");
+			$(this).attr("style","cursor:text;");
+		});
+		h+=np.html();
 		h+='</div>';
-		h+='<div class="hitHeaderContent" style="width:60%">';//Paises 
+		h+='<div class="hitHeaderContent" style="width:45%">';//Paises 
 		h+=getHit(hidx);
 		h+='</div>';
 
@@ -611,11 +644,14 @@ function clickMe(hidx)
 	$(".hitView").html(h);
 }
 
+var currentipidxs;
+
 function analiza(data)
 {
 	var hits=data["hits"];
 	var texto=data["tag"];
 	currentParagraphs=data["parrafos"];
+	currentipidxs=data["ipidxs"];
 	currentHits=hits;
 	if(hits.length==0)
 	{
@@ -657,7 +693,9 @@ function analiza(data)
 			clickMe(oldPos);
 		}
 		var myElement = document.getElementById(currentView+String(oldPos));
-		var topPos = myElement.offsetTop;
+		var topPos = 0;
+		if (myElement!=null)
+			topPos = myElement.offsetTop;
 		document.getElementById('analiza').scrollTop = topPos;
 		oldPos="";
 	}
@@ -1146,9 +1184,9 @@ function expandVariante(vidx)
 	h+="<input type='text' class='input2' id='nivelVariante' value='"+variante[0][6]+"'></input>";
 	h+="<span class='milabel'>Dispersion:  </span>";
 	var vd=variante[0][9];
-	if(vd==null)
+	if(String(vd)=="null")
 	{
-		vd=0.0;
+		vd="";
 	}
 	h+="<input type='text' class='input2' id='dispersionVariante' value='"+vd+"'></input>";
 	h+="</div>";

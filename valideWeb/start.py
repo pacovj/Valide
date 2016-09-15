@@ -12,7 +12,9 @@ import xml.etree.ElementTree as ET
 import base64
 import hashlib
 import random
-
+import sys
+import re
+import traceback
 articulos={"ms":["un","el","ese","este","aquel","algún","ningún"],
 	"mp":["unos","los","esos","estos","aquellos","algunos","ningunos"],
 	"fs":["una","la","esa","esta","aquella","alguna","ninguna"],
@@ -47,33 +49,42 @@ class myRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 		self.send_response(200)
 		self.send_header('Content-type', 'text/html')
 		self.end_headers()
-		if self.path=="/shutdown":
-			self.wfile.write("Ok!")
-			timeout=2
-		if self.path=="/loadPaises":
-			dumpTable("Paises",self)
-		if self.path=="/loadUsos":
-			dumpTable("Usos",self)
-		if self.path=="/analiza":
-			analiza(self)
-		if self.path=="/cambia":
-			cambia(self)
-		if self.path=="/searchConcepto":
-			conceptos(self)
-		if self.path=="/nuevoConcepto":
-			nuevoConcepto(self)
-		if self.path=="/borraConcepto":
-			borraConcepto(self)
-		if self.path=="/salvaConcepto":
-			cambiaConcepto(self)
-		if self.path=="/dameVariantes":
-			dameVariantes(self)
-		if self.path=="/createVariante":
-			createVariante(self)
-		if self.path=="/updateVariante":
-			updateVariante(self)
-		if self.path=="/borraVariante":
-			borraVariante(self)
+		try:
+			if self.path=="/shutdown":
+				self.wfile.write("Ok!")
+				timeout=2
+			if self.path=="/loadPaises":
+				dumpTable("Paises",self)
+			if self.path=="/loadUsos":
+				dumpTable("Usos",self)
+			if self.path=="/analiza":
+				analiza(self)
+			if self.path=="/cambia":
+				cambia(self)
+			if self.path=="/searchConcepto":
+				conceptos(self)
+			if self.path=="/nuevoConcepto":
+				nuevoConcepto(self)
+			if self.path=="/borraConcepto":
+				borraConcepto(self)
+			if self.path=="/salvaConcepto":
+				cambiaConcepto(self)
+			if self.path=="/dameVariantes":
+				dameVariantes(self)
+			if self.path=="/createVariante":
+				createVariante(self)
+			if self.path=="/updateVariante":
+				updateVariante(self)
+			if self.path=="/borraVariante":
+				borraVariante(self)
+		except Exception as ee:
+			print "!!!!!!Unexpected error:" + str( sys.exc_info()[0]) 
+			lugar=''
+			for frame in traceback.extract_tb(sys.exc_info()[2]):
+				fname,lineno,fn,text = frame
+				lugar=lugar+" - "+fname + " - " + str(lineno)
+				print "!!!!!!Error in %s on line %d" % (fname, lineno)
+			self.wfile.write(json.dumps({"error":"Buuuuu!"}))
 
 def isHit(colocacion,ngram):
 	toks=colocacion.split(" ")
@@ -104,34 +115,57 @@ def wordMe(paragraph):
 		words.append(word)
 	return (words,separators)
 
-def getTextoTag(parrafos,hits):
-	pidx=0
+def getTextoTag(parrafos,hits,ipidx):
+	pidx=-1
 	texto=""
 	hidx=0
-	for parrafo in parrafos:
+	for hit in hits:
+		print hit["texto"]
+		print hit["pidx"]
+		print hit["ppi"]
+	for oi in range(0,len(parrafos)):
+		if pidx!=ipidx[oi]:
+			if texto!="":
+				texto+="</p>"
+			texto+="<p>"
+			pidx=ipidx[oi]
+		parrafo=parrafos[oi]
 		cparrafo=""
 		(words,separators)=wordMe(parrafo)
 		sidx=0
+		isopen=False
+		chits=[]
 		for i in range(0,len(words)):
-			if hidx<len(hits) and hits[hidx]["pidx"]==pidx:
+			if hidx<len(hits) and hits[hidx]["pidx"]==oi:
 				longitud=len(wordMe(hits[hidx]["texto"])[0])
 				if i==hits[hidx]["ppi"]+longitud:
 					cparrafo+="</span>"
+					isopen=False
 					hidx+=1
 			if sidx<len(separators) and separators[sidx][1]==i:
 				cparrafo+=separators[sidx][0]
 				sidx+=1
 			if i>0:
 				cparrafo+=" "
-			if hidx<len(hits) and hits[hidx]["pidx"]==pidx:
-				if i==hits[hidx]["ppi"]:
-					cparrafo+="<span class='thit' id='texto_"+str(hidx)+"' onclick='clickMe("+str(hidx)+")'>"
+			if hidx<len(hits) and hits[hidx]["pidx"]==oi and i==hits[hidx]["ppi"]:
+				chits.append(hits[hidx])
+				cparrafo+="<span class='thit texto_"+str(hidx)+"' onclick='clickMe("+str(hidx)+")'>"
+				isopen=True
 			cparrafo+=words[i]
+		if isopen:
+			cparrafo+="</span>"
+			hidx+=1
 		if cparrafo=="":
-			texto+="<p>"+parrafo+"</p>"
-		else:
-			texto+="<p>"+cparrafo+"</p>"
-		pidx+=1
+			cparrafo=parrafo
+		for hit in chits:
+			hit["parrafo"]=cparrafo
+		texto+=cparrafo
+		while sidx<len(separators):
+			texto+=separators[sidx][0]
+			sidx+=1
+		texto+=" "
+	if not texto.endswith("</p>"):
+		texto+="</p>"
 	return texto
 
 def conceptos(request):
@@ -152,57 +186,52 @@ def cambia(request):
 	print "Cambiando"
 	(words,separators)=wordMe(parrafo)
 	print parrafo
-	(owords,oseparators)=wordMe(original)
+	
 	#Buscar el articulo
 	#reemplazar el original por sinonimo
 	texto=''
 	#Obtener la conjugacion del original
 	obases=getCompleteBases(original,spos)
-	target=getNewBases(sinonimo,obases[0])
-	print obases
+	target=""
+	if len(obases)>0:
+		target=getNewBases(sinonimo,obases[0])
 	if target=="":
 		target=sinonimo
 	if original[0].isupper():
 		target=target.capitalize()
-	longitud=len(owords)
 	print target
 	i=0
 	while i<len(words):
 		while len(separators)>0 and separators[0][1]==i:
 			texto+=separators[0][0]
 			del separators[0]
-		j=0
-		count=0
 		if i>0:
 			texto+=" "
-		while j<longitud and (i+j)<len(words):
-			if words[i+j].lower()==owords[j].lower():
-				count+=1
-			j+=1
-		if count>=longitud:
+		if i==ppi:
 			texto+=target
+			i+=len(original.split(" "))
 		else:
 			texto+=words[i]
-		i+=1
+			i+=1
 	while len(separators)>0:
 		texto+=separators[0][0]
 		del separators[0]
-	print "exito"
-	print texto
-	print clean(texto)
-	request.wfile.write(json.dumps({"texto":clean(texto)}))
+	t=re.sub(' +',' ',clean(texto))
+	request.wfile.write(json.dumps({"texto":t}))
 
 def analiza(request):
 	vars=request.getVars()
 	#Parsear texto
-	paragraphs=paragraphMe(vars['text'][0])
+	(paragraphs,ps)=paragraphMe(vars['text'][0])
 	chunks=chunkMe(paragraphs)
 	morphs=morphMe(chunks)
 	#Buscar variantes lexicas
 	hits=lexMe(morphs,paragraphs)
 	hits=pruneHits(hits,vars['Paises'][0],vars['Usos'][0])
 	hits=extractConceptos(hits)
-	request.wfile.write(clean(json.dumps({"hits":hits,"parrafos":paragraphs,"tag":getTextoTag(paragraphs,hits)})))
+	ttext=getTextoTag(paragraphs,hits,ps)
+	ttext=re.sub(' +',' ',ttext)
+	request.wfile.write(clean(json.dumps({"hits":hits,"parrafos":paragraphs,"tag":ttext,"ipidxs":ps})))
 
 def getIndexArray(nombres,tabla):
 	v=[]
@@ -346,11 +375,19 @@ def getText(node):
 
 def paragraphMe(html):
 	paragraphs=[]
+	pidx=0
+	ps=[]
 	print html
 	root = ET.fromstring(html)
 	for child in root:
-		paragraphs.append(getText(child))
-	return paragraphs
+		for s in getText(child).split("."):
+			if s!="" and s!="." and s!=" ":
+				if not s.endswith("."):
+					s+="."
+				paragraphs.append(s)
+				ps.append(pidx)
+		pidx+=1
+	return paragraphs,ps
 
 def isWhiteSpace(c):
 	return c==' '
